@@ -1,0 +1,46 @@
+version: '3.6'
+services:
+
+  wes-elixir:
+    image: elixircloud/wes-elixir:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    links:
+      - mongo
+    command: bash -c "cd /app/wes_elixir; gunicorn -c config.py wsgi:app"
+    volumes:
+      - ../../data/wes_elixir:/data
+
+  wes-elixir-worker:
+    image: elixircloud/wes-elixir:latest
+    restart: unless-stopped
+    depends_on:
+      - wes-elixir
+    links:
+      - mongo
+      - rabbit
+    command: bash -c "cd /app/wes_elixir; celery worker -A celery_worker -E --loglevel=info"
+    volumes:
+      - ../../data/wes_elixir:/data
+
+  rabbit:
+    image: "rabbitmq:3-management"
+    hostname: "rabbit"
+    restart: unless-stopped
+    links:
+      - mongo
+
+  mongo:
+    image: mongo:3.2
+    restart: unless-stopped
+    volumes:
+      - ../../data/wes_elixir/db:/data/db
+
+  flower:
+    image: mher/flower:0.9
+    restart: unless-stopped
+    links:
+      - wes-elixir-worker
+    command: flower --broker=amqp://guest:guest@rabbit:5672// --port=5555

@@ -11,7 +11,7 @@ from jwt import (decode, get_unverified_header, algorithms)
 import requests
 import json
 
-from wes_elixir.config.config_parser import get_conf, get_conf_type
+from pro_wes.config.config_parser import get_conf, get_conf_type
 
 
 # Get logger instance

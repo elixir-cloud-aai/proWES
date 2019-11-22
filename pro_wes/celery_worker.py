@@ -1,8 +1,8 @@
 """Entry point for Celery workers."""
 
-from wes_elixir.config.app_config import parse_app_config
-from wes_elixir.factories.celery_app import create_celery_app
-from wes_elixir.factories.connexion_app import create_connexion_app
+from pro_wes.config.app_config import parse_app_config
+from pro_wes.factories.celery_app import create_celery_app
+from pro_wes.factories.connexion_app import create_connexion_app
 
 
 # Parse app configuration

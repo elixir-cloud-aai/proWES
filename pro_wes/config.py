@@ -1,7 +1,7 @@
 import os
 
-from wes_elixir.config.config_parser import get_conf
-from wes_elixir.config.app_config import parse_app_config
+from pro_wes.config.config_parser import get_conf
+from pro_wes.config.app_config import parse_app_config
 
 # Source the WES config for defaults
 flask_config = parse_app_config(config_var='WES_CONFIG')

@@ -6,10 +6,10 @@ from typing import Dict
 from celery import (Celery, uuid)
 from connexion.exceptions import Forbidden
 
-from wes_elixir.config.config_parser import get_conf
-from wes_elixir.errors.errors import WorkflowNotFound
-from wes_elixir.ga4gh.wes.states import States
-from wes_elixir.tasks.tasks.cancel_run import task__cancel_run
+from pro_wes.config.config_parser import get_conf
+from pro_wes.errors.errors import WorkflowNotFound
+from pro_wes.ga4gh.wes.states import States
+from pro_wes.tasks.tasks.cancel_run import task__cancel_run
 
 
 # Get logger instance

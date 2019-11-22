@@ -30,8 +30,8 @@ There are some prerequisites to deploying WES on Kubernetes. Namely:
 
 - MongoDB:
   - in the same namespace reachable via 'mongodb'
-  - DB called wes-elixir-db created
-  - database-user and database-password for wes-elixir-db available in a Secret
+  - DB called prowes-db created
+  - database-user and database-password for prowes-db available in a Secret
     called 'mongodb'
 - RabbitMQ:
   - in the same namespace reachable via 'rabbitmq-cluster'
@@ -119,7 +119,7 @@ kubectl create -f mongodb-service-external.yaml
 ```
 
 It is assumed that the external MongoDB already has a database called
-`wes-elixir-db` created and a user with read-write access available. Next you
+`prowes-db` created and a user with read-write access available. Next you
 will need to configure the MongoDB user and password in a secret (replace
 `<username>` and `<password>`):
 

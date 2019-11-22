@@ -1,46 +1,58 @@
 version: '3.6'
 services:
 
-  wes-elixir:
-    image: elixircloud/wes-elixir:latest
+  prowes-worker:
+    image: elixircloud/prowes:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - prowes
+    links:
+      - mongodb
+      - rabbitmq
+    command: bash -c "cd /app/pro_wes; celery worker -A celery_worker -E --loglevel=info"
+    volumes:
+      - ../../data/pro_wes:/data
+
+  prowes:
+    image: elixircloud/prowes:latest
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
     links:
-      - mongo
-    command: bash -c "cd /app/wes_elixir; gunicorn -c config.py wsgi:app"
+      - mongodb
+    command: bash -c "cd /app/pro_wes; gunicorn -c config.py wsgi:app"
     volumes:
-      - ../../data/wes_elixir:/data
+      - ${PROWES_DATA_DIR:-../data/pro_wes}:/data
+    ports:
+      - "7676:8080"
 
-  wes-elixir-worker:
-    image: elixircloud/wes-elixir:latest
-    restart: unless-stopped
-    depends_on:
-      - wes-elixir
-    links:
-      - mongo
-      - rabbit
-    command: bash -c "cd /app/wes_elixir; celery worker -A celery_worker -E --loglevel=info"
-    volumes:
-      - ../../data/wes_elixir:/data
-
-  rabbit:
+  rabbitmq:
     image: "rabbitmq:3-management"
-    hostname: "rabbit"
+    hostname: "rabbitmq"
     restart: unless-stopped
     links:
-      - mongo
+      - mongodb
+    ports:
+      - "5662:5672"
 
-  mongo:
+  mongodb:
     image: mongo:3.2
     restart: unless-stopped
     volumes:
-      - ../../data/wes_elixir/db:/data/db
+      - ${PROWES_DATA_DIR:-../data/pro_wes}/db:/data/db
+    ports:
+      - "27007:27017"
 
   flower:
     image: mher/flower:0.9
     restart: unless-stopped
     links:
-      - wes-elixir-worker
+      - prowes-worker
     command: flower --broker=amqp://guest:guest@rabbit:5672// --port=5555
+    ports:
+      - "5545:5555"
+

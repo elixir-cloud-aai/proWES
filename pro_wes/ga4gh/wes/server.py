@@ -6,13 +6,13 @@ from celery import current_app as celery_app
 from connexion import request
 from flask import current_app
 
-import wes_elixir.ga4gh.wes.endpoints.cancel_run as cancel_run
-import wes_elixir.ga4gh.wes.endpoints.get_run_log as get_run_log
-import wes_elixir.ga4gh.wes.endpoints.get_run_status as get_run_status
-import wes_elixir.ga4gh.wes.endpoints.list_runs as list_runs
-import wes_elixir.ga4gh.wes.endpoints.run_workflow as run_workflow
-import wes_elixir.ga4gh.wes.endpoints.get_service_info as get_service_info
-from wes_elixir.security.decorators import auth_token_optional
+import pro_wes.ga4gh.wes.endpoints.cancel_run as cancel_run
+import pro_wes.ga4gh.wes.endpoints.get_run_log as get_run_log
+import pro_wes.ga4gh.wes.endpoints.get_run_status as get_run_status
+import pro_wes.ga4gh.wes.endpoints.list_runs as list_runs
+import pro_wes.ga4gh.wes.endpoints.run_workflow as run_workflow
+import pro_wes.ga4gh.wes.endpoints.get_service_info as get_service_info
+from pro_wes.security.decorators import auth_token_optional
 
 
 # Get logger instance

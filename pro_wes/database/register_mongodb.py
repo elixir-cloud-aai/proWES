@@ -8,8 +8,8 @@ from typing import Dict
 from flask import Flask
 from flask_pymongo import ASCENDING, PyMongo
 
-from wes_elixir.config.config_parser import get_conf
-from wes_elixir.ga4gh.wes.endpoints.get_service_info import get_service_info
+from pro_wes.config.config_parser import get_conf
+from pro_wes.ga4gh.wes.endpoints.get_service_info import get_service_info
 
 
 # Get logger instance

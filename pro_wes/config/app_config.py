@@ -4,7 +4,7 @@ import logging
 import os
 from typing import Optional
 
-from wes_elixir.config.config_parser import YAMLConfigParser
+from pro_wes.config.config_parser import YAMLConfigParser
 
 
 # Get logger instance

@@ -4,7 +4,7 @@ from typing import Dict
 
 from bson.objectid import ObjectId
 
-from wes_elixir.config.config_parser import get_conf
+from pro_wes.config.config_parser import get_conf
 
 
 # Get logger instance

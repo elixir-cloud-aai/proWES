@@ -8,7 +8,7 @@ from typing import (List, Dict)
 
 from connexion import App
 
-from wes_elixir.config.config_parser import get_conf
+from pro_wes.config.config_parser import get_conf
 
 
 # Get logger instance
@@ -77,7 +77,7 @@ def __add_security_definitions(
     # Set security definitions
     amend = '''
 
-# Amended by WES-ELIXIR
+# Amended by proWES
 securityDefinitions:
   jwt:
     type: apiKey

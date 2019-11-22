@@ -10,12 +10,12 @@ from celery.exceptions import SoftTimeLimitExceeded
 from flask import current_app
 from pymongo import collection as Collection
 
-from wes_elixir.celery_worker import celery
-from wes_elixir.config.config_parser import get_conf
-import wes_elixir.database.db_utils as db_utils
-from wes_elixir.database.register_mongodb import create_mongo_client
-from wes_elixir.ga4gh.wes.states import States
-from wes_elixir.tasks.utils import set_run_state
+from pro_wes.celery_worker import celery
+from pro_wes.config.config_parser import get_conf
+import pro_wes.database.db_utils as db_utils
+from pro_wes.database.register_mongodb import create_mongo_client
+from pro_wes.ga4gh.wes.states import States
+from pro_wes.tasks.utils import set_run_state
 
 
 # Get logger instance

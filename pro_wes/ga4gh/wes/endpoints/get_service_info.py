@@ -7,8 +7,8 @@ from typing import (Any, Dict, Mapping)
 
 from pymongo import collection as Collection
 
-import wes_elixir.database.db_utils as db_utils
-from wes_elixir.ga4gh.wes.states import States
+import pro_wes.database.db_utils as db_utils
+from pro_wes.ga4gh.wes.states import States
 
 
 # Get logger instance

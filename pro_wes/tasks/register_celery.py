@@ -4,8 +4,8 @@ from flask import Flask
 import logging
 import os
 
-from wes_elixir.factories.celery_app import create_celery_app
-from wes_elixir.tasks.celery_task_monitor import TaskMonitor
+from pro_wes.factories.celery_app import create_celery_app
+from pro_wes.tasks.celery_task_monitor import TaskMonitor
 
 
 # Get logger instance

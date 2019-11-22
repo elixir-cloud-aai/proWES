@@ -5,8 +5,8 @@ import logging
 
 from typing import Dict
 
-from wes_elixir.config.config_parser import get_conf
-from wes_elixir.errors.errors import WorkflowNotFound
+from pro_wes.config.config_parser import get_conf
+from pro_wes.errors.errors import WorkflowNotFound
 
 
 # Get logger instance

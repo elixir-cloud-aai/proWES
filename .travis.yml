@@ -11,14 +11,14 @@ stages:
   if: type != pull_request
 - name: ci-publish
   if: branch != dev AND type != pull_request
-#- name: ci-deploy
-#  if: branch != dev AND type != pull_request
-#- name: ci-clean
-#  if: branch != dev AND type != pull_request
-#- name: prod-publish
-#  if: branch = dev AND type != pull_request
-#- name: prod-deploy
-#  if: branch = dev AND type != pull_request
+- name: ci-deploy
+  if: branch != dev AND type != pull_request
+- name: ci-clean
+  if: branch != dev AND type != pull_request
+- name: prod-publish
+  if: branch = dev AND type != pull_request
+- name: prod-deploy
+  if: branch = dev AND type != pull_request
 
 jobs:
   include:
@@ -47,94 +47,94 @@ jobs:
     - docker push "$DOCKER_REPO_NAME":"$SUFFIX"
     # delete token
     - rm ${HOME}/.docker/config.json
-#  - stage: ci-deploy
-#    name: Deploy CI app on Kubernetes
-#    script:
-#    # install kubectl
-#    - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl
-#    - chmod +x kubectl
-#    - sudo mv kubectl /usr/local/bin/
-#    # install helm
-#    - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
-#    - chmod 700 get_helm.sh
-#    - ./get_helm.sh
-#    # log in
-#    - kubectl config set-credentials prowes-ci-user --token=$K8S_TOKEN
-#    - kubectl config set-cluster ci-server --server=$K8S_CLUSTER
-#    - kubectl config set-context ci-context --user=prowes-ci-user --namespace=$K8S_NAMESPACE --cluster=ci-server
-#    - kubectl config use-context ci-context
-#    # deploy
-#    - SUFFIX=${TRAVIS_BRANCH//_/-}
-#    - |
-#      helm install prowes-$SUFFIX deployment --wait --timeout 120s \
-#        --set flower.appName=flower-$SUFFIX \
-#        --set prowes.appName=prowes-$SUFFIX \
-#        --set prowes.image="$DOCKER_REPO_NAME":"$SUFFIX" \
-#        --set celeryWorker.appName=celery-worker-$SUFFIX \
-#        --set celeryWorker.image="$DOCKER_REPO_NAME":"$SUFFIX" \
-#        --set rabbitmq.appName=rabbitmq-$SUFFIX \
-#        --set mongodb.appName=mongodb-$SUFFIX
-#    # test
-#    - endpoint=$(kubectl get route -l app=prowes-$SUFFIX -o=jsonpath='{.items[0].spec.host}')
-#    - echo $endpoint
-#    - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://$endpoint/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
-#  - stage: ci-clean
-#    name: Delete the deployed CI environment from Kubernetes
-#    script:
-#      # install kubectl
-#      - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl
-#      - chmod +x kubectl
-#      - sudo mv kubectl /usr/local/bin/
-#      # install helm
-#      - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
-#      - chmod 700 get_helm.sh
-#      - ./get_helm.sh
-#      # log in
-#      - kubectl config set-credentials prowes-ci-user --token=$K8S_TOKEN
-#      - kubectl config set-cluster ci-server --server=$K8S_CLUSTER
-#      - kubectl config set-context ci-context --user=prowes-ci-user --namespace=$K8S_NAMESPACE --cluster=ci-server
-#      - kubectl config use-context ci-context
-#      # deploy
-#      - SUFFIX=${TRAVIS_BRANCH//_/-}
-#      - helm delete prowes-$SUFFIX
-#  - stage: prod-publish
-#    name: Push production image to the docker registry
-#    script:
-#      # build and tag app image
-#      - docker build -t "$DOCKER_REPO_NAME":latest .
-#      # log in
-#      - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-#      # push image
-#      - docker push "$DOCKER_REPO_NAME":latest
-#      # delete token
-#      - rm ${HOME}/.docker/config.json
-#  - stage: prod-deploy
-#    name: Deploy prod app on Kubernetes
-#    script:
-#      # install kubectl
-#      - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl
-#      - chmod +x kubectl
-#      - sudo mv kubectl /usr/local/bin/
-#      # install helm
-#      - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
-#      - chmod 700 get_helm.sh
-#      - ./get_helm.sh
-#      # log in
-#      - kubectl config set-credentials prowes-user --token=$K8S_PROD_TOKEN
-#      - kubectl config set-cluster server --server=$K8S_CLUSTER
-#      - kubectl config set-context context --user=prowes-user --namespace=$K8S_PROD_NAMESPACE --cluster=server
-#      - kubectl config use-context context
-#      # deploy
-#      - |
-#        helm upgrade prowes deployment --wait --timeout 120s \
-#          --set flower.appName=flower \
-#          --set prowes.appName=prowes \
-#          --set prowes.image="$DOCKER_REPO_NAME":latest \
-#          --set celeryWorker.appName=celery-worker \
-#          --set celeryWorker.image="$DOCKER_REPO_NAME":latest \
-#          --set rabbitmq.appName=rabbitmq \
-#          --set mongodb.appName=mongodb
-#      # test
-#      - endpoint=$(kubectl get route -l app=prowes -o=jsonpath='{.items[0].spec.host}')
-#      - echo $endpoint
-#      - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://$endpoint/ga4gh/wes/v1/tasks?view=MINIMAL' -o /dev/null)=='200'"
+  - stage: ci-deploy
+    name: Deploy CI app on Kubernetes
+    script:
+    # install kubectl
+    - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl
+    - chmod +x kubectl
+    - sudo mv kubectl /usr/local/bin/
+    # install helm
+    - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
+    - chmod 700 get_helm.sh
+    - ./get_helm.sh
+    # log in
+    - kubectl config set-credentials prowes-ci-user --token=$K8S_TOKEN
+    - kubectl config set-cluster ci-server --server=$K8S_CLUSTER
+    - kubectl config set-context ci-context --user=prowes-ci-user --namespace=$K8S_NAMESPACE --cluster=ci-server
+    - kubectl config use-context ci-context
+    # deploy
+    - SUFFIX=${TRAVIS_BRANCH//_/-}
+    - |
+      helm install prowes-$SUFFIX deployment --wait --timeout 120s \
+        --set flower.appName=flower-$SUFFIX \
+        --set prowes.appName=prowes-$SUFFIX \
+        --set prowes.image="$DOCKER_REPO_NAME":"$SUFFIX" \
+        --set celeryWorker.appName=celery-worker-$SUFFIX \
+        --set celeryWorker.image="$DOCKER_REPO_NAME":"$SUFFIX" \
+        --set rabbitmq.appName=rabbitmq-$SUFFIX \
+        --set mongodb.appName=mongodb-$SUFFIX
+    # test
+    - endpoint=$(kubectl get route -l app=prowes-$SUFFIX -o=jsonpath='{.items[0].spec.host}')
+    - echo $endpoint
+    - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://$endpoint/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
+  - stage: ci-clean
+    name: Delete the deployed CI environment from Kubernetes
+    script:
+      # install kubectl
+      - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl
+      - chmod +x kubectl
+      - sudo mv kubectl /usr/local/bin/
+      # install helm
+      - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
+      - chmod 700 get_helm.sh
+      - ./get_helm.sh
+      # log in
+      - kubectl config set-credentials prowes-ci-user --token=$K8S_TOKEN
+      - kubectl config set-cluster ci-server --server=$K8S_CLUSTER
+      - kubectl config set-context ci-context --user=prowes-ci-user --namespace=$K8S_NAMESPACE --cluster=ci-server
+      - kubectl config use-context ci-context
+      # deploy
+      - SUFFIX=${TRAVIS_BRANCH//_/-}
+      - helm delete prowes-$SUFFIX
+  - stage: prod-publish
+    name: Push production image to the docker registry
+    script:
+      # build and tag app image
+      - docker build -t "$DOCKER_REPO_NAME":latest .
+      # log in
+      - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      # push image
+      - docker push "$DOCKER_REPO_NAME":latest
+      # delete token
+      - rm ${HOME}/.docker/config.json
+  - stage: prod-deploy
+    name: Deploy prod app on Kubernetes
+    script:
+      # install kubectl
+      - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl
+      - chmod +x kubectl
+      - sudo mv kubectl /usr/local/bin/
+      # install helm
+      - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
+      - chmod 700 get_helm.sh
+      - ./get_helm.sh
+      # log in
+      - kubectl config set-credentials prowes-user --token=$K8S_PROD_TOKEN
+      - kubectl config set-cluster server --server=$K8S_CLUSTER
+      - kubectl config set-context context --user=prowes-user --namespace=$K8S_PROD_NAMESPACE --cluster=server
+      - kubectl config use-context context
+      # deploy
+      - |
+        helm upgrade prowes deployment --wait --timeout 120s \
+          --set flower.appName=flower \
+          --set prowes.appName=prowes \
+          --set prowes.image="$DOCKER_REPO_NAME":latest \
+          --set celeryWorker.appName=celery-worker \
+          --set celeryWorker.image="$DOCKER_REPO_NAME":latest \
+          --set rabbitmq.appName=rabbitmq \
+          --set mongodb.appName=mongodb
+      # test
+      - endpoint=$(kubectl get route -l app=prowes -o=jsonpath='{.items[0].spec.host}')
+      - echo $endpoint
+      - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://$endpoint/ga4gh/wes/v1/tasks?view=MINIMAL' -o /dev/null)=='200'"

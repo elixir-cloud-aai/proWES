@@ -13,8 +13,6 @@ stages:
   if: branch != dev AND type != pull_request
 - name: ci-deploy
   if: branch != dev AND type != pull_request
-- name: ci-clean
-  if: branch != dev AND type != pull_request
 - name: prod-publish
   if: branch = dev AND type != pull_request
 - name: prod-deploy
@@ -22,31 +20,31 @@ stages:
 
 jobs:
   include:
-#  - stage: docker-test
-#    name: Build, deploy and test application with docker
-#    env:
-#    - DATA_DIR="../data/pro_wes"
-#    script:
-#    # create data directories
-#    - "mkdir -p $DATA_DIR/{db,specs}"
-#    # build and deploy application
-#    - "docker-compose up -d --build"
-#    # wait for services to be up
-#    - sleep 30
-#    # test if endpoint 'GET /runs' is accessible
-#    - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://localhost:7676/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
-#  - stage: ci-publish
-#    name: Push CI image to the docker registry
-#    script:
-#    # build and tag app image
-#    - SUFFIX=${TRAVIS_BRANCH//_/-}
-#    - docker build -t "$DOCKER_REPO_NAME":"$SUFFIX" .
-#    # log in
-#    - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-#    # push image
-#    - docker push "$DOCKER_REPO_NAME":"$SUFFIX"
-#    # delete token
-#    - rm ${HOME}/.docker/config.json
+  - stage: docker-test
+    name: Build, deploy and test application with docker
+    env:
+    - DATA_DIR="../data/pro_wes"
+    script:
+    # create data directories
+    - "mkdir -p $DATA_DIR/{db,specs}"
+    # build and deploy application
+    - "docker-compose up -d --build"
+    # wait for services to be up
+    - sleep 30
+    # test if endpoint 'GET /runs' is accessible
+    - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://localhost:7676/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
+  - stage: ci-publish
+    name: Push CI image to the docker registry
+    script:
+    # build and tag app image
+    - SUFFIX=${TRAVIS_BRANCH//_/-}
+    - docker build -t "$DOCKER_REPO_NAME":"$SUFFIX" .
+    # log in
+    - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    # push image
+    - docker push "$DOCKER_REPO_NAME":"$SUFFIX"
+    # delete token
+    - rm ${HOME}/.docker/config.json
   - stage: ci-deploy
     name: Deploy CI app on Kubernetes
     script:
@@ -65,7 +63,6 @@ jobs:
     - kubectl config use-context ci-context
     # deploy
     - SUFFIX=${TRAVIS_BRANCH//_/-}
-    - helm delete prowes-$SUFFIX
     - |
       helm install prowes-$SUFFIX deployment --wait --timeout 120s \
         --set flower.appName=flower-$SUFFIX \
@@ -80,25 +77,7 @@ jobs:
     - endpoint=$(kubectl get route -l app=prowes-$SUFFIX -o=jsonpath='{.items[0].spec.host}')
     - echo $endpoint
     - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://$endpoint/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
-  - stage: ci-clean
-    name: Delete the deployed CI environment from Kubernetes
-    script:
-      # install kubectl
-      - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl
-      - chmod +x kubectl
-      - sudo mv kubectl /usr/local/bin/
-      # install helm
-      - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
-      - chmod 700 get_helm.sh
-      - ./get_helm.sh
-      # log in
-      - kubectl config set-credentials prowes-ci-user --token=$K8S_TOKEN
-      - kubectl config set-cluster ci-server --server=$K8S_CLUSTER
-      - kubectl config set-context ci-context --user=prowes-ci-user --namespace=$K8S_NAMESPACE --cluster=ci-server
-      - kubectl config use-context ci-context
-      # deploy
-      - SUFFIX=${TRAVIS_BRANCH//_/-}
-      - helm delete prowes-$SUFFIX
+    - helm delete prowes-$SUFFIX
   - stage: prod-publish
     name: Push production image to the docker registry
     script:

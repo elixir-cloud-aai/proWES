@@ -1,0 +1,10 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.prowes.appName }}
+spec:
+  selector:
+    app: {{ .Values.prowes.appName }}
+  ports:
+  - port: 8080
+    targetPort: 8080

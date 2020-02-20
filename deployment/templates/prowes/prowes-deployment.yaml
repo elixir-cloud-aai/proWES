@@ -58,7 +58,7 @@ spec:
           periodSeconds: 20
         readinessProbe:
           httpGet:
-            path: /ga4gh/wes/v1/tasks/service-info
+            path: /ga4gh/wes/v1/service-info
             port: prowes-port
           initialDelaySeconds: 3
           periodSeconds: 3

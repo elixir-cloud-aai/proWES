@@ -65,7 +65,6 @@ jobs:
     - kubectl config use-context ci-context
     # deploy
     - SUFFIX=${TRAVIS_BRANCH//_/-}
-    - helm delete prowes-$SUFFIX
     - |
       helm install prowes-$SUFFIX deployment --wait --timeout 120s \
         --set flower.appName=flower-$SUFFIX \
@@ -139,4 +138,4 @@ jobs:
       # test
       - endpoint=$(kubectl get route -l app=prowes -o=jsonpath='{.items[0].spec.host}')
       - echo $endpoint
-      - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://$endpoint/ga4gh/wes/v1/tasks?view=MINIMAL' -o /dev/null)=='200'"
+      - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://$endpoint/ga4gh/wes/v1/runs' -o /dev/null)=='200'"

@@ -22,31 +22,31 @@ stages:
 
 jobs:
   include:
-  - stage: docker-test
-    name: Build, deploy and test application with docker
-    env:
-    - DATA_DIR="../data/pro_wes"
-    script:
-    # create data directories
-    - "mkdir -p $DATA_DIR/{db,specs}"
-    # build and deploy application
-    - "docker-compose up -d --build"
-    # wait for services to be up
-    - sleep 30
-    # test if endpoint 'GET /runs' is accessible
-    - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://localhost:7676/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
-  - stage: ci-publish
-    name: Push CI image to the docker registry
-    script:
-    # build and tag app image
-    - SUFFIX=${TRAVIS_BRANCH//_/-}
-    - docker build -t "$DOCKER_REPO_NAME":"$SUFFIX" .
-    # log in
-    - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    # push image
-    - docker push "$DOCKER_REPO_NAME":"$SUFFIX"
-    # delete token
-    - rm ${HOME}/.docker/config.json
+#  - stage: docker-test
+#    name: Build, deploy and test application with docker
+#    env:
+#    - DATA_DIR="../data/pro_wes"
+#    script:
+#    # create data directories
+#    - "mkdir -p $DATA_DIR/{db,specs}"
+#    # build and deploy application
+#    - "docker-compose up -d --build"
+#    # wait for services to be up
+#    - sleep 30
+#    # test if endpoint 'GET /runs' is accessible
+#    - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://localhost:7676/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
+#  - stage: ci-publish
+#    name: Push CI image to the docker registry
+#    script:
+#    # build and tag app image
+#    - SUFFIX=${TRAVIS_BRANCH//_/-}
+#    - docker build -t "$DOCKER_REPO_NAME":"$SUFFIX" .
+#    # log in
+#    - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+#    # push image
+#    - docker push "$DOCKER_REPO_NAME":"$SUFFIX"
+#    # delete token
+#    - rm ${HOME}/.docker/config.json
   - stage: ci-deploy
     name: Deploy CI app on Kubernetes
     script:
@@ -73,7 +73,8 @@ jobs:
         --set celeryWorker.appName=celery-worker-$SUFFIX \
         --set celeryWorker.image="$DOCKER_REPO_NAME":"$SUFFIX" \
         --set rabbitmq.appName=rabbitmq-$SUFFIX \
-        --set mongodb.appName=mongodb-$SUFFIX
+        --set mongodb.appName=mongodb-$SUFFIX \
+        --debug
     # test
     - endpoint=$(kubectl get route -l app=prowes-$SUFFIX -o=jsonpath='{.items[0].spec.host}')
     - echo $endpoint

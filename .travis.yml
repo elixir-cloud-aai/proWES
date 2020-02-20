@@ -65,6 +65,7 @@ jobs:
     - kubectl config use-context ci-context
     # deploy
     - SUFFIX=${TRAVIS_BRANCH//_/-}
+    - helm delete prowes-$SUFFIX
     - |
       helm install prowes-$SUFFIX deployment --wait --timeout 120s \
         --set flower.appName=flower-$SUFFIX \

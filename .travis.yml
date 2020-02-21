@@ -78,7 +78,7 @@ jobs:
     # test
     - endpoint=$(kubectl get route -l app=prowes-$SUFFIX -o=jsonpath='{.items[0].spec.host}')
     - echo $endpoint
-    - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://$endpoint/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
+    - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'https://$endpoint/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
   - stage: ci-clean
     name: Delete the deployed CI environment from Kubernetes
     script:

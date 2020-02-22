@@ -6,19 +6,24 @@ language: minimal
 services:
 - docker
 
+# do not build anything for PRs
+if: type != pull_request AND branch = master
+
 stages:
 - name: docker-test
-  if: type != pull_request
-- name: ci-publish
-  if: branch != dev AND type != pull_request
+#  if: type != pull_request
+#- name: ci-publish
+#  if: branch != dev AND type != pull_request
+#  if: branch != dev AND type != pull_request
 - name: ci-deploy
-  if: branch != dev AND type != pull_request
+#  if: branch != dev AND type != pull_request
 - name: ci-clean
-  if: branch != dev AND type != pull_request
-- name: prod-publish
-  if: branch = dev AND type != pull_request
+#  if: branch != dev AND type != pull_request
+#- name: prod-publish
+#  if: branch = dev AND type != pull_request
+#  if: branch = dev AND type != pull_request
 - name: prod-deploy
-  if: branch = dev AND type != pull_request
+#  if: branch = dev AND type != pull_request
 
 jobs:
   include:

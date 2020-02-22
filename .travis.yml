@@ -27,7 +27,7 @@ before_script:
         export K8S_NAMESPACE="$K8S_PROD_NAMESPACE"
         export HELM_COMMAND="upgrade"
         export HELM_SUFFIX=""
-        export HELM_OPTIONS="--debug"
+        export HELM_OPTIONS=""
         export HELM_CLEANUP="false"
     else
         export DOCKER_TAG=${TRAVIS_BRANCH//_/-}
@@ -38,7 +38,7 @@ before_script:
         export K8S_NAMESPACE="$K8S_NAMESPACE"
         export HELM_COMMAND="install"
         export HELM_SUFFIX="-$DOCKER_TAG"
-        export HELM_OPTIONS=""
+        export HELM_OPTIONS="--debug"
         export HELM_CLEANUP="true"
     fi
 
@@ -123,7 +123,7 @@ jobs:
               --set celeryWorker.image=$DOCKER_REPO_NAME:$DOCKER_TAG \
               --set rabbitmq.appName=rabbitmq$HELM_SUFFIX \
               --set mongodb.appName=mongodb$HELM_SUFFIX \
-              $HELM_OPTIONS"
+              $HELM_OPTIONS
         # test endpoint
         - |
           export URL=$(kubectl get route -l app=prowes$HELM_SUFFIX -o=jsonpath='{.items[0].spec.host}') \

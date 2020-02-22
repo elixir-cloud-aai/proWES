@@ -11,7 +11,8 @@ if: type != pull_request
 
 # set conditional variables
 before_install:
-  - if [[ $TRAVIS_BRANCH == "dev" ]]; then
+  - |
+    if [ "$TRAVIS_BRANCH" = "dev" ]; then
         export TAG="latest"
     else
         export TAG=${TRAVIS_BRANCH//_/-}
@@ -23,35 +24,31 @@ stages:
 
 jobs:
   include:
-#    - stage: test
-#      if: branch != dev
-#      script:
-#          env 
-#        - echo "OKAY"
-#    - stage: docker-test
-#      name: Build, deploy and test application with docker
-#      env:
-#      - DATA_DIR="../data/pro_wes"
-#      script:
-#      # create data directories
-#      - "mkdir -p $DATA_DIR/{db,specs}"
-#      # build and deploy application
-#      - "docker-compose up -d --build"
-#      # wait for services to be up
-#      - sleep 30
-#      # test if endpoint 'GET /runs' is accessible
-#      - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://localhost:7676/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
     - stage: build
       name: Build app image and push to Docker registry
       script:
-        # build and tag app image
         - docker build -t "$DOCKER_REPO_NAME":"$TAG" .
-        # log in
         - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        # push image
         - docker push "$DOCKER_REPO_NAME":"$SUFFIX"
-        # delete token
-        - rm ${HOME}/.docker/config.json
+        - rm ${HOME}/.docker/config.json  # delete token
+    - stage: build
+      name: Build, deploy and test application locally with docker-compose
+      env:
+        - DATA_DIR="${HOME}/data/pro_wes"
+      script:
+        - mkdir -p ${DATA_DIR}/{db,specs}  # create data directories
+        - docker-compose up -d --build
+        - sleep 30  # wait for services to start up
+        - |
+          test $(\
+              curl \
+                  -sL \
+                  - o /dev/null \
+                  -w '%{http_code}' \
+                  -X GET \
+                  --header 'Accept: application/json'
+                  'http://localhost:7676/ga4gh/wes/v1/runs' \
+          ) == '200'
 #    - stage: ci-deploy
 #      name: Deploy on Kubernetes, test endpoint and delete
 #      script:

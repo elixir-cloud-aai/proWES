@@ -65,8 +65,6 @@ before_script:
         export HELM_COMMAND="install"
         export HELM_RELEASE="prowes-$DOCKER_TAG"
         export HELM_OPTIONS="
-            --wait
-            --timeout=$HELM_TIMEOUT
             --set=flower.appName=flower-$DOCKER_TAG
             --set=prowes.appName=prowes-$DOCKER_TAG
             --set=prowes.image=$DOCKER_REPO_NAME:$DOCKER_TAG
@@ -136,7 +134,7 @@ jobs:
         # install or upgrade app
         - |
           helm $HELM_COMMAND $HELM_RELEASE deployment \
-              --wait URL \
+              --wait \
               --timeout=$HELM_TIMEOUT \
               $HELM_OPTIONS
         # test endpoint

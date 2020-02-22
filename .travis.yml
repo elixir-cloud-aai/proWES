@@ -145,7 +145,7 @@ jobs:
                   -o=jsonpath='{.items[0].spec.host}' \
           ) \
         - |
-          export ENDPOINT="${ENDPOINT_K8S_PREFIX}${URL}${ENDPOINT_K8S_SUFFIX}" \
+          export ENDPOINT="${K8S_ENDPOINT_PREFIX}${URL}${K8S_ENDPOINT_SUFFIX}" \
           && echo $ENDPOINT
         - |
           test $( \

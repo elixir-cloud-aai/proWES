@@ -100,17 +100,17 @@ jobs:
           && kubectl config use-context $K8S_CONTEXT
         # install or upgrade app
         - |
-          export bla=$(helm $HELM_COMMAND prowes$HELM_SUFFIX deployment \
+          export bla="helm $HELM_COMMAND prowes$HELM_SUFFIX deployment \
               --wait \
               --timeout 120s \
               --set flower.appName=flower$HELM_SUFFIX \
               --set prowes.appName=prowes$HELM_SUFFIX \
-              --set prowes.image="$DOCKER_REPO_NAME":"$DOCKER_TAG" \
+              --set prowes.image=$DOCKER_REPO_NAME:$DOCKER_TAG \
               --set celeryWorker.appName=celery-worker$HELM_SUFFIX \
-              --set celeryWorker.image="$DOCKER_REPO_NAME":"$DOCKER_TAG" \
+              --set celeryWorker.image=$DOCKER_REPO_NAME:$DOCKER_TAG \
               --set rabbitmq.appName=rabbitmq$HELM_SUFFIX \
               --set mongodb.appName=mongodb$HELM_SUFFIX \
-              $HELM_OPTIONS)
+              $HELM_OPTIONS"
         - echo $bla
         # test endpoint
         - |

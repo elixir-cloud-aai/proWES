@@ -105,7 +105,7 @@ jobs:
                   -o /dev/null \
                   -w '%{http_code}' \
                   -X GET \
-                  --header='Accept: application/json' \
+                  --header 'Accept: application/json' \
                   "$TRAVIS_ENDPOINT" \
           ) == '200'
         - docker-compose down
@@ -156,7 +156,7 @@ jobs:
                   -o /dev/null \
                   -w '%{http_code}' \
                   -X GET \
-                  --header='Accept: application/json' \
+                  --header 'Accept: application/json' \
                   "$ENDPOINT" \
           ) == '200'
         # clean up

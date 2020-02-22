@@ -33,8 +33,6 @@ COPY ./requirements.txt /app/requirements.txt
 ## Install Python dependencies
 RUN cd /app \
   && pip install -r requirements.txt \
-  && cd /app/src/cwl-tes \
-  && python setup.py develop \
   && cd /
 
 ## Copy remaining app files
@@ -47,3 +45,4 @@ RUN cd /app \
 
 ## Copy FTP server credentials
 COPY .netrc /root
+

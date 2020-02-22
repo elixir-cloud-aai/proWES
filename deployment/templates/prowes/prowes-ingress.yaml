@@ -1,0 +1,39 @@
+{{- if eq .Values.clusterType "openshift" }}
+apiVersion: route.openshift.io/v1
+kind: Route
+{{- else }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+{{ end }}
+metadata:
+  labels:
+    app: {{ .Values.prowes.appName }}
+  name: {{ .Values.prowes.appName }}
+spec:
+{{- if eq .Values.clusterType "openshift" }}
+  host: {{ .Values.prowes.appName }}.{{ .Values.applicationDomain }}
+  path: "/ga4gh/wes/v1"
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
+  to:
+    kind: Service
+    name: {{ .Values.prowes.appName }}
+    weight: 100
+  wildcardPolicy: None
+status:
+  ingress: []
+{{- else }}
+  tls:
+  - hosts:
+    - {{ .Values.prowes.appName }}.{{ .Values.applicationDomain }}
+  rules:
+  - host: {{ .Values.prowes.appName }}.{{ .Values.applicationDomain }}
+    http:
+      paths:
+      - path: "/ga4gh/wes/v1"
+        backend:
+          serviceName: {{ .Values.prowes.appName }}
+          servicePort: 8080
+{{ end }}

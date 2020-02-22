@@ -6,8 +6,12 @@ language: minimal
 services:
 - docker
 
-# do not build anything for PRs
-if: type != pull_request
+if: type != pull_request  # do not build anything for PRs
+
+# set global variables
+env:
+  global:
+    - TEST_ENDPOINT="http://localhost:7676/ga4gh/wes/v1/runs"
 
 # set conditional variables
 before_install:
@@ -29,7 +33,7 @@ jobs:
       script:
         - docker build -t "$DOCKER_REPO_NAME":"$TAG" .
         - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        - docker push "$DOCKER_REPO_NAME":"$SUFFIX"
+        - docker push "$DOCKER_REPO_NAME":"$TAG"
         - rm ${HOME}/.docker/config.json  # delete token
     - stage: build
       name: Build, deploy and test application locally with docker-compose
@@ -47,8 +51,10 @@ jobs:
                   -w '%{http_code}' \
                   -X GET \
                   --header 'Accept: application/json'
-                  'http://localhost:7676/ga4gh/wes/v1/runs' \
+                  "$TEST_ENDPOINT" \
           ) == '200'
+        - docker-compose down
+
 #    - stage: ci-deploy
 #      name: Deploy on Kubernetes, test endpoint and delete
 #      script:

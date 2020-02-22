@@ -48,57 +48,59 @@ stages:
 
 jobs:
   include:
-#    - stage: build
-#      name: Build app image and push to Docker registry
-#      script:
-#        - docker build -t "$DOCKER_REPO_NAME":"$DOCKER_TAG" .
-#        - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-#        - docker push "$DOCKER_REPO_NAME":"$DOCKER_TAG"
-#        - rm ${HOME}/.docker/config.json  # delete token
-#    - stage: build
-#      name: Build, deploy and test application locally with docker-compose
-#      env:
-#        - DATA_DIR="${HOME}/data/pro_wes"
-#      script:
-#        - mkdir -p ${DATA_DIR}/{db,specs}  # create data directories
-#        - docker-compose up -d --build
-#        - sleep 30  # wait for services to start up
-#        - |
-#          test $( \
-#              curl \
-#                  -sL \
-#                  -o /dev/null \
-#                  -w '%{http_code}' \
-#                  -X GET \
-#                  --header 'Accept: application/json' \
-#                  "$ENDPOINT_TRAVIS" \
-#          ) == '200'
-#        - docker-compose down
+    - stage: build
+      name: Build app image and push to Docker registry
+      script:
+        - docker build -t "$DOCKER_REPO_NAME":"$DOCKER_TAG" .
+        - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker push "$DOCKER_REPO_NAME":"$DOCKER_TAG"
+        - rm ${HOME}/.docker/config.json  # delete token
+    - stage: build
+      name: Build, deploy and test application locally with docker-compose
+      env:
+        - DATA_DIR="${HOME}/data/pro_wes"
+      script:
+        - mkdir -p ${DATA_DIR}/{db,specs}  # create data directories
+        - docker-compose up -d --build
+        - sleep 30  # wait for services to start up
+        - |
+          test $( \
+              curl \
+                  -sL \
+                  -o /dev/null \
+                  -w '%{http_code}' \
+                  -X GET \
+                  --header 'Accept: application/json' \
+                  "$ENDPOINT_TRAVIS" \
+          ) == '200'
+        - docker-compose down
     - stage: deploy
       name: Deploy on Kubernetes
       script:
         # install dependencies
-        - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl
-        - chmod +x kubectl
-        - sudo mv kubectl /usr/local/bin/
+        - |
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl \
+          && chmod +x kubectl \
+          && sudo mv kubectl /usr/local/bin/
         - |
           curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
-              > get_helm.sh
-        - chmod 700 get_helm.sh
-        - ./get_helm.sh
+              > get_helm.sh \
+          && chmod 700 get_helm.sh \
+          && ./get_helm.sh
         # configure k8s
-        - kubectl config set-credentials $K8S_USER \
+        - |
+          kubectl config set-credentials $K8S_USER \
               --token=$K8S_TOKEN \
-        - kubectl config set-cluster $K8S_CLUSTER_NAME \
+          && kubectl config set-cluster $K8S_CLUSTER_NAME \
               --server=$K8S_CLUSTER \
-        - kubectl config set-context $K8S_CONTEXT \
+          && kubectl config set-context $K8S_CONTEXT \
               --user=$K8S_USER \
               --namespace=$K8S_NAMESPACE \
               --cluster=$K8S_CLUSTER_NAME \
-        - kubectl config use-context $K8S_CONTEXT
+          && kubectl config use-context $K8S_CONTEXT
         # install or upgrade app
         - |
-          export BLA=$(helm $HELM_COMMAND prowes$HELM_SUFFIX deployment \
+          export bla=$(helm $HELM_COMMAND prowes$HELM_SUFFIX deployment \
               --wait \
               --timeout 120s \
               --set flower.appName=flower$HELM_SUFFIX \
@@ -109,7 +111,7 @@ jobs:
               --set rabbitmq.appName=rabbitmq$HELM_SUFFIX \
               --set mongodb.appName=mongodb$HELM_SUFFIX \
               $HELM_OPTIONS)
-        - echo $BLA
+        - echo $bla
         # test endpoint
         - |
           export URL=$(kubectl get route -l app=prowes$HELM_SUFFIX -o=jsonpath='{.items[0].spec.host}') \

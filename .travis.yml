@@ -1,3 +1,28 @@
+# Behavior:
+# - all code changes except merge commits are processed
+# - the application's Docker image is built and pushed to the registry (stage
+#   `build`)
+# - the application is built with `docker-compose` and an endpoint is tested
+#   (stage `build`)
+# - the application is deployed on a Kubernetes cluster at the CSC and an
+#   endpoint is tested (stage `deploy`); the deployment on branch `dev` is
+#   permanent, while for all other branches it is torn down after the test
+#
+# The following variables need to be set at <https://travis-ci.com/>
+# - DOCKER_REPO_NAME
+# - DOCKER_TOKEN
+# - DOCKER_USER
+# - HELM_TIMEOUT
+# - K8S_CLUSTER
+# - K8S_ENDPOINT_PREFIX
+# - K8S_ENDPOINT_SUFFIX
+# - K8S_NAMESPACE_PROD (only required in branch `dev`)
+# - K8S_NAMESPACE_TEST
+# - K8S_TOKEN_PROD (only required in branch `dev`)
+# - K8S_TOKEN_TEST
+# - TRAVIS_DATA_DIR
+# - TRAVIS_ENDPOINT
+
 os:
 - linux
 dist: bionic
@@ -8,30 +33,16 @@ services:
 
 if: type != pull_request  # do not build anything for PRs
 
-# set global variables
-env:
-  global:
-    - DATA_DIR_TRAVIS="${HOME}/data/pro_wes"
-    - ENDPOINT_TRAVIS="http://localhost:7676/ga4gh/wes/v1/runs"
-    - ENDPOINT_K8S_PREFIX="https://"
-    - ENDPOINT_K8S_SUFFIX="/ga4gh/wes/v1/runs"
-    - HELM_TIMEOUT="120s"
-    - |
-      HELM_OPTIONS_COMMON="
-            --wait
-            --timeout=$HELM_TIMEOUT
-      "
-
 # set variables according to branch
 before_script:
   - |
     if [ "$TRAVIS_BRANCH" = "dev" ]; then
         export DOCKER_TAG="latest"
         export K8S_USER="prowes-user"
-        export K8S_TOKEN="$K8S_PROD_TOKEN"
+        export K8S_TOKEN="$K8S_TOKEN_PROD"
         export K8S_CLUSTER_NAME="server"
         export K8S_CONTEXT="context"
-        export K8S_NAMESPACE="$K8S_PROD_NAMESPACE"
+        export K8S_NAMESPACE="$K8S_NAMESPACE_PROD"
         export HELM_COMMAND="upgrade"
         export HELM_RELEASE="prowes"
         export HELM_OPTIONS="
@@ -47,10 +58,10 @@ before_script:
     else
         export DOCKER_TAG=${TRAVIS_BRANCH//_/-}
         export K8S_USER="prowes-user-ci"
-        export K8S_TOKEN="$K8S_TOKEN"
+        export K8S_TOKEN="$K8S_TOKEN_TEST"
         export K8S_CLUSTER_NAME="ci-server"
         export K8S_CONTEXT="ci-context"
-        export K8S_NAMESPACE="$K8S_NAMESPACE"
+        export K8S_NAMESPACE="$K8S_NAMESPACE_TEST"
         export HELM_COMMAND="install"
         export HELM_RELEASE="prowes-$DOCKER_TAG"
         export HELM_OPTIONS="
@@ -78,13 +89,13 @@ jobs:
       name: Build app image and push to Docker registry
       script:
         - docker build -t "$DOCKER_REPO_NAME":"$DOCKER_TAG" .
-        - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin
         - docker push "$DOCKER_REPO_NAME":"$DOCKER_TAG"
         - rm ${HOME}/.docker/config.json  # delete token
     - stage: build
       name: Build, deploy and test application locally with docker-compose
       script:
-        - mkdir -p ${DATA_DIR_TRAVIS}/{db,specs}  # create data directories
+        - mkdir -p ${TRAVIS_DATA_DIR}/{db,specs}  # create data directories
         - docker-compose up -d --build
         - sleep 30  # wait for services to start up
         - |
@@ -95,7 +106,7 @@ jobs:
                   -w '%{http_code}' \
                   -X GET \
                   --header='Accept: application/json' \
-                  "$ENDPOINT_TRAVIS" \
+                  "$TRAVIS_ENDPOINT" \
           ) == '200'
         - docker-compose down
     - stage: deploy
@@ -123,7 +134,11 @@ jobs:
               --cluster=$K8S_CLUSTER_NAME \
           && kubectl config use-context $K8S_CONTEXT
         # install or upgrade app
-        - helm $HELM_COMMAND $HELM_RELEASE deployment $HELM_OPTIONS_COMMON $HELM_OPTIONS
+        - |
+          helm $HELM_COMMAND $HELM_RELEASE deployment \
+              --wait URL \
+              --timeout=$HELM_TIMEOUT \
+              $HELM_OPTIONS
         # test endpoint
         - |
           export URL=$(\

@@ -47,7 +47,7 @@ jobs:
           test $(\
               curl \
                   -sL \
-                  - o /dev/null \
+                  -o /dev/null \
                   -w '%{http_code}' \
                   -X GET \
                   --header 'Accept: application/json'

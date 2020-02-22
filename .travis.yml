@@ -7,7 +7,7 @@ services:
 - docker
 
 # do not build anything for PRs
-if: type != pull_request
+if: type = pull_request
 
 stages:
   - name: test

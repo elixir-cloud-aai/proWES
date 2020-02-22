@@ -9,25 +9,25 @@ services:
 # do not build anything for PRs
 if: type != pull_request
 
+# set conditional variables
+before_install:
+  - if [[ $TRAVIS_BRANCH == "dev" ]]; then
+        export TAG="latest"
+    else
+        export TAG=${TRAVIS_BRANCH//_/-}
+    fi
+
 stages:
-  - name: test
-  - name: docker-test
-  - name: ci-publish
-    if: branch != dev
-  - name: ci-deploy
-    if: branch != dev
-  - name: ci-clean
-    if: branch != dev
-  - name: prod-publish
-    if: branch = dev
-  - name: prod-deploy
-    if: branch = dev
+  - name: build
+  - name: deploy
 
 jobs:
   include:
-    - stage: test
-      script:
-        - echo "OKAY"
+#    - stage: test
+#      if: branch != dev
+#      script:
+#          env 
+#        - echo "OKAY"
 #    - stage: docker-test
 #      name: Build, deploy and test application with docker
 #      env:
@@ -41,20 +41,19 @@ jobs:
 #      - sleep 30
 #      # test if endpoint 'GET /runs' is accessible
 #      - "test $(curl -sL -w '%{http_code}' -X GET --header 'Accept: application/json' 'http://localhost:7676/ga4gh/wes/v1/runs' -o /dev/null) == '200'"
-#    - stage: ci-publish
-#      name: Push CI image to the docker registry
-#      script:
-#      # build and tag app image
-#      - SUFFIX=${TRAVIS_BRANCH//_/-}
-#      - docker build -t "$DOCKER_REPO_NAME":"$SUFFIX" .
-#      # log in
-#      - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-#      # push image
-#      - docker push "$DOCKER_REPO_NAME":"$SUFFIX"
-#      # delete token
-#      - rm ${HOME}/.docker/config.json
+    - stage: build
+      name: Build app image and push to Docker registry
+      script:
+        # build and tag app image
+        - docker build -t "$DOCKER_REPO_NAME":"$TAG" .
+        # log in
+        - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        # push image
+        - docker push "$DOCKER_REPO_NAME":"$SUFFIX"
+        # delete token
+        - rm ${HOME}/.docker/config.json
 #    - stage: ci-deploy
-#      name: Deploy CI app on Kubernetes
+#      name: Deploy on Kubernetes, test endpoint and delete
 #      script:
 #      # install kubectl
 #      - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl
@@ -85,6 +84,7 @@ jobs:
 #      - endpoint=$(kubectl get route -l app=prowes-$SUFFIX -o=jsonpath='{.items[0].spec.host}')
 #      - echo $endpoint
 #      - 'test $(curl -sL -w "%{http_code}" -X GET --header "Accept: application/json" "https://$endpoint/ga4gh/wes/v1/runs" -o /dev/null) == "200"'
+#      - helm delete prowes-$SUFFIX
 #    - stage: ci-clean
 #      name: Delete the deployed CI environment from Kubernetes
 #      script:
@@ -103,18 +103,6 @@ jobs:
 #      - kubectl config use-context ci-context
 #      # deploy
 #      - SUFFIX=${TRAVIS_BRANCH//_/-}
-#      - helm delete prowes-$SUFFIX
-#    - stage: prod-publish
-#      name: Push production image to the docker registry
-#      script:
-#      # build and tag app image
-#      - docker build -t "$DOCKER_REPO_NAME":latest .
-#      # log in
-#      - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-#      # push image
-#      - docker push "$DOCKER_REPO_NAME":latest
-#      # delete token
-#      - rm ${HOME}/.docker/config.json
 #    - stage: prod-deploy
 #      name: Deploy prod app on Kubernetes
 #      script:

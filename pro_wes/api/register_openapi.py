@@ -8,7 +8,7 @@ from typing import (List, Dict)
 
 from connexion import App
 
-from pro_wes.config.config_parser import get_conf
+from foca.config.config_parser import get_conf
 
 
 # Get logger instance

@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-applicationDomain: c03.k8s-popup.csc.fi
+applicationDomain: rahtiapp.fi
 
 # which cluster type the service is going to be deployed on
 # either 'kubernetes' or 'openshift'

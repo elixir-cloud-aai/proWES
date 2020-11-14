@@ -1,28 +1,3 @@
-# Behavior:
-# - all code changes except merge commits are processed
-# - the application's Docker image is built and pushed to the registry (stage
-#   `build`)
-# - the application is built with `docker-compose` and an endpoint is tested
-#   (stage `build`)
-# - the application is deployed on a Kubernetes cluster at the CSC and an
-#   endpoint is tested (stage `deploy`); the deployment on branch `dev` is
-#   permanent, while for all other branches it is torn down after the test
-#
-# The following variables need to be set at <https://travis-ci.com/>
-# - DOCKER_REPO_NAME
-# - DOCKER_TOKEN
-# - DOCKER_USER
-# - HELM_TIMEOUT
-# - K8S_CLUSTER
-# - K8S_ENDPOINT_PREFIX
-# - K8S_ENDPOINT_SUFFIX
-# - K8S_NAMESPACE_PROD (only required in branch `dev`)
-# - K8S_NAMESPACE_TEST
-# - K8S_TOKEN_PROD (only required in branch `dev`)
-# - K8S_TOKEN_TEST
-# - TRAVIS_DATA_DIR
-# - TRAVIS_ENDPOINT
-
 os:
 - linux
 dist: bionic
@@ -31,69 +6,36 @@ language: minimal
 services:
 - docker
 
-if: type != pull_request  # do not build anything for PRs
-
-# set variables according to branch
-before_script:
-  - |
-    if [ "$TRAVIS_BRANCH" = "dev" ]; then
-        export DOCKER_TAG="latest"
-        export K8S_USER="prowes-user"
-        export K8S_TOKEN="$K8S_TOKEN_PROD"
-        export K8S_CLUSTER_NAME="server"
-        export K8S_CONTEXT="context"
-        export K8S_NAMESPACE="$K8S_NAMESPACE_PROD"
-        export HELM_COMMAND="upgrade"
-        export HELM_RELEASE="prowes"
-        export HELM_OPTIONS="
-            --set=flower.appName=flower
-            --set=prowes.appName=prowes
-            --set=prowes.image=$DOCKER_REPO_NAME:$DOCKER_TAG
-            --set=celeryWorker.appName=celery-worker
-            --set=celeryWorker.image=$DOCKER_REPO_NAME:$DOCKER_TAG
-            --set=rabbitmq.appName=rabbitmq
-            --set=mongodb.appName=mongodb
-        "
-        export HELM_CLEANUP="false"
-    else
-        export DOCKER_TAG=${TRAVIS_BRANCH//_/-}
-        export K8S_USER="prowes-user-ci"
-        export K8S_TOKEN="$K8S_TOKEN_TEST"
-        export K8S_CLUSTER_NAME="ci-server"
-        export K8S_CONTEXT="ci-context"
-        export K8S_NAMESPACE="$K8S_NAMESPACE_TEST"
-        export HELM_COMMAND="install"
-        export HELM_RELEASE="prowes-$DOCKER_TAG"
-        export HELM_OPTIONS="
-            --set=flower.appName=flower-$DOCKER_TAG
-            --set=prowes.appName=prowes-$DOCKER_TAG
-            --set=prowes.image=$DOCKER_REPO_NAME:$DOCKER_TAG
-            --set=celeryWorker.appName=celery-worker-$DOCKER_TAG
-            --set=celeryWorker.image=$DOCKER_REPO_NAME:$DOCKER_TAG
-            --set=rabbitmq.appName=rabbitmq-$DOCKER_TAG
-            --set=mongodb.appName=mongodb-$DOCKER_TAG
-            --debug
-        "
-        export HELM_CLEANUP="true"
-    fi
+# build for all pushes, as well as PRs coming from forks
+# this ensures that the pipeline is triggered for internal pushes,
+# PRs from forks and pushes to existing PRs from forks
+if: (type == push) OR (type == pull_request AND fork == true)
 
 stages:
-  - name: build
-  - name: deploy
+- name: build
+- name: publish
+  # for security reasons, builds from forks won't be published until merged;
+  # also, environment variables defined in repository settings are not
+  # available to builds from PRs coming from external repos
+  if: fork == false
+
+before_script:
+  - |
+    export DATA_DIR="${HOME}/data"
+    export
+    if [ "$TRAVIS_BRANCH" = "dev" ]; then
+        export DOCKER_TAG="$(date '+%Y%m%d')"
+    else
+        export DOCKER_TAG=${TRAVIS_BRANCH//_/-}
+        export DOCKER_TAG=${DOCKER_TAG//\//-}
+    fi
 
 jobs:
   include:
     - stage: build
-      name: Build app image and push to Docker registry
+      name: Build, deploy and test
       script:
-        - docker build -t "$DOCKER_REPO_NAME":"$DOCKER_TAG" .
-        - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin
-        - docker push "$DOCKER_REPO_NAME":"$DOCKER_TAG"
-        - rm ${HOME}/.docker/config.json  # delete token
-    - stage: build
-      name: Build, deploy and test application locally with docker-compose
-      script:
-        - mkdir -p ${TRAVIS_DATA_DIR}/{db,specs}  # create data directories
+        - mkdir -p ${DATA_DIR}/{db,output,tmp}  # create data directories
         - docker-compose up -d --build
         - sleep 30  # wait for services to start up
         - |
@@ -104,61 +46,14 @@ jobs:
                   -w '%{http_code}' \
                   -X GET \
                   --header 'Accept: application/json' \
-                  "$TRAVIS_ENDPOINT" \
-          ) == '200'
+                  "${PROBE_ENDPOINT}" \
+          ) == '200' || travis_terminate 1
         - docker-compose down
-    - stage: deploy
-      name: Deploy app on Kubernetes
+    - stage: publish
+      name: Build and publish
       script:
-        # install dependencies
-        - |
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl \
-          && chmod +x kubectl \
-          && sudo mv kubectl /usr/local/bin/
-        - |
-          curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
-              > get_helm.sh \
-          && chmod 700 get_helm.sh \
-          && ./get_helm.sh
-        # configure k8s
-        - |
-          kubectl config set-credentials $K8S_USER \
-              --token=$K8S_TOKEN \
-          && kubectl config set-cluster $K8S_CLUSTER_NAME \
-              --server=$K8S_CLUSTER \
-          && kubectl config set-context $K8S_CONTEXT \
-              --user=$K8S_USER \
-              --namespace=$K8S_NAMESPACE \
-              --cluster=$K8S_CLUSTER_NAME \
-          && kubectl config use-context $K8S_CONTEXT
-        # install or upgrade app
-        - |
-          helm $HELM_COMMAND $HELM_RELEASE deployment \
-              --wait \
-              --timeout=$HELM_TIMEOUT \
-              $HELM_OPTIONS
-        # test endpoint
-        - |
-          export URL=$(\
-              kubectl get route \
-                  -l app=$HELM_RELEASE \
-                  -o=jsonpath='{.items[0].spec.host}' \
-          ) \
-        - |
-          export ENDPOINT="${K8S_ENDPOINT_PREFIX}${URL}${K8S_ENDPOINT_SUFFIX}" \
-          && echo $ENDPOINT
-        - |
-          test $( \
-              curl \
-                  -sL \
-                  -o /dev/null \
-                  -w '%{http_code}' \
-                  -X GET \
-                  --header 'Accept: application/json' \
-                  "$ENDPOINT" \
-          ) == '200'
-        # clean up
-        - |
-          if [ "$HELM_CLEANUP" = "true" ]; then
-              helm delete $HELM_RELEASE
-          fi
+        - docker build . -t "${DOCKER_REPO_NAME}:latest" -t "${DOCKER_REPO_NAME}:${DOCKER_TAG}"
+        - echo "${DOCKER_TOKEN}" | docker login -u "${DOCKER_USER}" --password-stdin
+        - docker push "${DOCKER_REPO_NAME}:${DOCKER_TAG}"
+        - if [ "$TRAVIS_BRANCH" = "dev" ]; then docker push "${DOCKER_REPO_NAME}:latest"; fi
+        - rm ${HOME}/.docker/config.json  # delete token

@@ -53,7 +53,7 @@ celery:
 # OpenAPI specs
 api:
     specs:
-        - path: '20181010.be85140.workflow_execution_service.swagger.yaml'
+        - path: '20200312.openapi.yaml'
           strict_validation: True
           validate_responses: True
           swagger_ui: True

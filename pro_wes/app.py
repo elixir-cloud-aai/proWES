@@ -1,56 +1,20 @@
-"""Entry point to start service."""
+import logging
+import os
 
-from pro_wes.api.register_openapi import register_openapi
-from pro_wes.config.app_config import parse_app_config
-from foca.config.config_parser import (get_conf, get_conf_type)
-from foca.config.log_config import configure_logging
-from pro_wes.database.register_mongodb import register_mongodb
-from pro_wes.errors.errors import register_error_handlers
-from pro_wes.factories.connexion_app import create_connexion_app
-from pro_wes.tasks.register_celery import register_task_service
-from pro_wes.security.cors import enable_cors
+from foca.foca import foca
+
+logger = logging.getLogger(__name__)
 
 
-def run_server():
-
-    # Configure logger
-    configure_logging(config_var='WES_CONFIG_LOG')
-
-    # Parse app configuration
-    config = parse_app_config(config_var='WES_CONFIG')
-
-    # Create Connexion app
-    connexion_app = create_connexion_app(config)
-
-    # Register MongoDB
-    connexion_app.app = register_mongodb(connexion_app.app)
-
-    # Register error handlers
-    connexion_app = register_error_handlers(connexion_app)
-
-    # Create Celery app and register background task monitoring service
-    register_task_service(connexion_app.app)
-
-    # Register OpenAPI specs
-    connexion_app = register_openapi(
-        app=connexion_app,
-        specs=get_conf_type(config, 'api', 'specs', types=(list)),
-        add_security_definitions=get_conf(
-            config,
-            'security',
-            'authorization_required'
+def main():
+    app = foca(
+        os.path.join(
+            os.path.dirname(__file__),
+            "config.yaml",
         )
     )
-
-    # Enable cross-origin resource sharing
-    enable_cors(connexion_app.app)
-
-    return connexion_app, config
+    app.run(port=app.port)
 
 
 if __name__ == '__main__':
-    connexion_app, config = run_server()
-    # Run app
-    connexion_app.run(
-        use_reloader=get_conf(config, 'server', 'use_reloader')
-    )
+    main()

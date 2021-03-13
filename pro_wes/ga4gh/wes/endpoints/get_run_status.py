@@ -1,12 +1,14 @@
 """Utility function for GET /runs/{run_id}/status endpoint."""
 
-from connexion.exceptions import Forbidden
 import logging
 
 from typing import Dict
 
 from foca.config.config_parser import get_conf
-from pro_wes.errors.errors import WorkflowNotFound
+from foca.errors.exceptions.exceptions import {
+    NotFound,
+    Forbidden
+}
 
 
 # Get logger instance
@@ -36,7 +38,7 @@ def get_run_status(
         state = document['api']['state']
     else:
         logger.error("Run '{run_id}' not found.".format(run_id=run_id))
-        raise WorkflowNotFound
+        raise NotFound
 
     # Raise error trying to access workflow run that is not owned by user
     # Only if authorization enabled

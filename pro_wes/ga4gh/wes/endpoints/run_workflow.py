@@ -19,7 +19,9 @@ from werkzeug.utils import secure_filename
 from flask import request
 
 from foca.config.config_parser import get_conf
-from pro_wes.errors.errors import BadRequest
+from foca.errors.exceptions.exceptions import {
+    BadRequest
+}
 from pro_wes.tasks.tasks.run_workflow import task__run_workflow
 
 

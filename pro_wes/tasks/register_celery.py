@@ -4,7 +4,7 @@ from flask import Flask
 import logging
 import os
 
-from pro_wes.factories.celery_app import create_celery_app
+from foca.factories.celery_app import create_celery_app
 from pro_wes.tasks.celery_task_monitor import TaskMonitor
 
 

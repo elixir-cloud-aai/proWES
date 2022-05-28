@@ -1,0 +1,152 @@
+# FOCA configuration
+# Available in app context as attributes of `current_app.config['FOCA']`
+# Automatically validated via FOCA
+# Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html
+
+# Server configuration
+# Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.ServerConfig
+server:
+    host: '0.0.0.0'
+    port: 8080
+    debug: True
+    environment: development
+    testing: False
+    use_reloader: False
+
+# Security configuration
+# Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.SecurityConfig
+security:
+    auth:
+        add_key_to_claims: True
+        algorithms:
+          - RS256
+        allow_expired: False
+        audience: null
+        validation_methods:
+          - userinfo
+          - public_key
+        validation_checks: any
+
+# Database configuration
+# Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.DBConfig
+db:
+    host: mongodb
+    port: 27017
+    dbs:
+        runStore:
+            collections:
+                services:
+                    runs:
+                        - keys:
+                              id: 1
+                          options:
+                            'unique': True
+                service_info:
+                    indexes:
+                        - keys:
+                              id: 1
+                          options:
+                            'unique': True
+
+# API configuration
+# Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.APIConfig
+api:
+    specs:
+        - path:
+            - api/20181010.be85140.workflow_execution_service.swagger.yaml
+          add_operation_fields:
+              x-openapi-router-controller: ga4gh.wes.server
+          add_security_fields:
+              x-bearerInfoFunc: app.validate_token
+          disable_auth: True
+          connexion:
+              strict_validation: True
+              validate_responses: True
+              options:
+                  swagger_ui: True
+                  serve_spec: True
+
+# Logging configuration
+# Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.LogConfig
+log:
+    version: 1
+    disable_existing_loggers: False
+    formatters:
+        standard:
+            class: logging.Formatter
+            style: "{"
+            format: "[{asctime}: {levelname:<8}] {message} [{name}]"
+    handlers:
+        console:
+            class: logging.StreamHandler
+            level: 20
+            formatter: standard
+            stream: ext://sys.stderr
+    root:
+        level: 10
+        handlers: [console]
+
+exceptions:
+    required_members: [['detail'], ['status'], ['title']]
+    status_member: ['status']
+    exceptions: cloud_registry.exceptions.exceptions
+
+# Custom configuration
+# Available in app context as attributes of `current_app.config['FOCA']`
+# Not validated via FOCA; if desired, validate parameters in app
+
+# Endpoint params, global and route-specific
+endpoints:
+    global:
+        default_page_size: 5
+        timeout_cancel_run: 60
+        timeout_run_workflow: Null
+
+# WES service info settings
+service_info:
+    contact_info: 'https://github.com/elixir-europe/proWES'
+    auth_instructions_url: 'https://www.elixir-europe.org/services/compute/aai'
+    supported_file_system_protocols:
+        - http
+    supported_wes_versions:
+        - 0.3.0
+    workflow_type_versions:
+        CWL:
+            workflow_type_version:
+                - v1.0
+    workflow_engine_versions:
+        cwl-tes: 0.2.0
+    default_workflow_engine_parameters:
+        - type: string
+          default_value: some_string
+        - type: int
+          default_value: '5'
+    tags:
+        known_tes_endpoints: 'https://tes.tsi.ebi.ac.uk/|https://tes-dev.tsi.ebi.ac.uk/|https://csc-tesk.c03.k8s-popup.csc.fi/|https://tesk.c01.k8s-popup.csc.fi/'
+        pro_wes_version: 0.14.0
+
+# TES server
+tes:
+    url: 'https://csc-tesk.c03.k8s-popup.csc.fi/'
+    timeout: 5
+    get_logs:
+        url_root: 'v1/tasks/'
+        query_params: '?view=FULL'
+
+# Storage
+storage:
+    permanent_dir: '/data/output'
+    tmp_dir: '/data/tmp'
+    remote_storage_url: 'ftp://ftp-private.ebi.ac.uk/upload/foivos'
+
+# Celery task queue
+celery:
+    broker_host: rabbitmq
+    broker_port: 5672
+    result_backend: 'rpc://'
+    include:
+        - pro_wes.tasks.tasks.run_workflow
+        - pro_wes.tasks.tasks.cancel_run
+    monitor:
+        timeout: 0.1
+    message_maxsize: 16777216

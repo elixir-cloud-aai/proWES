@@ -6,7 +6,7 @@ import logging
 from typing import Dict
 
 from foca.config.config_parser import get_conf
-from pro_wes.errors.errors import WorkflowNotFound
+from pro_wes.errors.errors import RunNotFound
 
 
 # Get logger instance
@@ -36,7 +36,7 @@ def get_run_log(
         run_log = document['api']
     else:
         logger.error("Run '{run_id}' not found.".format(run_id=run_id))
-        raise WorkflowNotFound
+        raise RunNotFound
 
     # Raise error trying to access workflow run that is not owned by user
     # Only if authorization enabled

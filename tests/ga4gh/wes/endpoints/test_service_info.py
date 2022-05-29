@@ -14,7 +14,7 @@ from unittest.mock import MagicMock
 from pro_wes.ga4gh.wes.endpoints.service_info import (
     RegisterServiceInfo
 )
-from pro_wes.errors.exceptions import (
+from pro_wes.exceptions import (
     NotFound,
     ValidationError,
 )

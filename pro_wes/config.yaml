@@ -35,12 +35,14 @@ db:
     dbs:
         runStore:
             collections:
-                services:
-                    runs:
+                runs:
+                    indexes:
                         - keys:
-                              id: 1
+                              - run_id: ASCENDING
+                                task_id: ASCENDING
                           options:
                             'unique': True
+                            'sparse': True
                 service_info:
                     indexes:
                         - keys:
@@ -53,7 +55,7 @@ db:
 api:
     specs:
         - path:
-            - api/20181010.be85140.workflow_execution_service.swagger.yaml
+            - api/20200806.4048014.workflow_execution_service.openapi.yaml
           add_operation_fields:
               x-openapi-router-controller: ga4gh.wes.server
           add_security_fields:
@@ -86,10 +88,12 @@ log:
         level: 10
         handlers: [console]
 
+# Exception configuration
+# Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.ExceptionConfig
 exceptions:
-    required_members: [['detail'], ['status'], ['title']]
-    status_member: ['status']
-    exceptions: cloud_registry.exceptions.exceptions
+    required_members: [['message'], ['code']]
+    status_member: ['code']
+    exceptions: pro_wes.exceptions.exceptions
 
 # Custom configuration
 # Available in app context as attributes of `current_app.config['FOCA']`

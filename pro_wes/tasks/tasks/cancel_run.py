@@ -12,7 +12,7 @@ from pymongo import collection as Collection
 
 from pro_wes.celery_worker import celery
 from foca.config.config_parser import get_conf
-import pro_wes.database.db_utils as db_utils
+import pro_wes.db_utils as db_utils
 from pro_wes.database.register_mongodb import create_mongo_client
 from pro_wes.ga4gh.wes.states import States
 from pro_wes.tasks.utils import set_run_state

@@ -7,7 +7,7 @@ from typing import (Any, Dict, Mapping)
 
 from pymongo import collection as Collection
 
-import pro_wes.database.db_utils as db_utils
+import pro_wes.db_utils as db_utils
 from pro_wes.ga4gh.wes.states import States
 
 

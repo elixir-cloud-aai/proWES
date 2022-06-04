@@ -7,7 +7,7 @@ from celery import (Celery, uuid)
 from connexion.exceptions import Forbidden
 
 from foca.config.config_parser import get_conf
-from pro_wes.errors.errors import WorkflowNotFound
+from pro_wes.errors.errors import RunNotFound
 from pro_wes.ga4gh.wes.states import States
 from pro_wes.tasks.tasks.cancel_run import task__cancel_run
 
@@ -39,7 +39,7 @@ def cancel_run(
     # Raise error if workflow run was not found
     if not document:
         logger.error("Run '{run_id}' not found.".format(run_id=run_id))
-        raise WorkflowNotFound
+        raise RunNotFound
 
     # Raise error trying to access workflow run that is not owned by user
     # Only if authorization enabled

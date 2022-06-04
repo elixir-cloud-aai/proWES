@@ -1,11 +1,11 @@
 ##### BASE IMAGE #####
-FROM python:3.7-slim-stretch
+FROM elixircloud/foca:20220524-py3.7
 
 ##### METADATA #####
-LABEL base.image="python:3.6-slim-stretch"
-LABEL version="1.1"
+LABEL base.image="elixircloud/foca:20220524-py3.7"
+LABEL version="2.0"
 LABEL software="proWES"
-LABEL software.version="1.0"
+LABEL software.version="0.15.0"
 LABEL software.description="Flask microservice implementing the Global Alliance for Genomics and Health (GA4GH) Workflow Execution Service (WES) API specification."
 LABEL software.website="https://github.com/elixir-europe/proWES"
 LABEL software.documentation="https://github.com/elixir-europe/proWES"
@@ -21,18 +21,17 @@ LABEL maintainer.license="https://spdx.org/licenses/Apache-2.0"
 ENV LOGNAME=ipython
 ENV USER=ipython
 
-# Install general dependencies
-RUN apt-get update && apt-get install -y nodejs openssl git build-essential python3-dev
-
 ## Set working directory
 WORKDIR /app
 
 ## Copy Python requirements
 COPY ./requirements.txt /app/requirements.txt
+COPY ./requirements_dev.txt /app/requirements_dev.txt
 
 ## Install Python dependencies
 RUN cd /app \
   && pip install -r requirements.txt \
+  && pip install -r requirements_dev.txt \
   && cd /
 
 ## Copy remaining app files

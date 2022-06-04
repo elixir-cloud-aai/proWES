@@ -44,7 +44,7 @@ info:
 
     Systems like WES need to also address the ability to pass credentials with jobs for input and output access.  In the current version of WES, the passing of credentials to authenticate and authorize access to inputs and outputs, as well as mandates about necessary file transfer protocols to support, are out of scope.  However, parallel work on the Data Object Service is addressing ways to pass around access credentials with data object references, opening up the possibility that a future version of WES will provide concrete mechanisms for workflow runs to access data using credentials different than those used for WES.  This is a work in progress and support of DOS in WES will be added in a future release of WES.
 servers:
-- url: https://{defaultHost}/{basePath}/{version}
+- url: https://{defaultHost}/{basePath}/{apiVersion}
   variables:
     defaultHost:
       default: www.example.com
@@ -427,7 +427,6 @@ components:
     ServiceInfo:
       title: ServiceInfo
       allOf:
-        - $ref: 'https://raw.githubusercontent.com/ga4gh-discovery/ga4gh-service-info/v1.0.0/service-info.yaml#/components/schemas/Service'
         - type: object
           properties:
             workflow_type_versions:

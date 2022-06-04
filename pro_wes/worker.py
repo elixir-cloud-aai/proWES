@@ -6,7 +6,7 @@ from pro_wes.app import init_app
 
 
 # Source application configuration
-flask_app = init_app()
+flask_app = init_app().app
 
 # Create Celery app
 celery = create_celery_app(app=flask_app)

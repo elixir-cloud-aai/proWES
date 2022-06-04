@@ -38,8 +38,8 @@ db:
                 runs:
                     indexes:
                         - keys:
-                              - run_id: ASCENDING
-                                task_id: ASCENDING
+                              run_id: 1
+                              task_id: 1
                           options:
                             'unique': True
                             'sparse': True
@@ -57,7 +57,7 @@ api:
         - path:
             - api/20200806.4048014.workflow_execution_service.openapi.yaml
           add_operation_fields:
-              x-openapi-router-controller: ga4gh.wes.server
+              x-openapi-router-controller: pro_wes.ga4gh.wes.server
           add_security_fields:
               x-bearerInfoFunc: app.validate_token
           disable_auth: True
@@ -90,10 +90,10 @@ log:
 
 # Exception configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.ExceptionConfig
-exceptions:
-    required_members: [['message'], ['code']]
-    status_member: ['code']
-    exceptions: pro_wes.exceptions.exceptions
+#exceptions:
+#    required_members: [['message'], ['code']]
+#    status_member: ['code']
+#    exceptions: pro_wes.exceptions.exceptions
 
 # Custom configuration
 # Available in app context as attributes of `current_app.config['FOCA']`
@@ -143,14 +143,17 @@ storage:
     tmp_dir: '/data/tmp'
     remote_storage_url: 'ftp://ftp-private.ebi.ac.uk/upload/foivos'
 
-# Celery task queue
-celery:
-    broker_host: rabbitmq
-    broker_port: 5672
-    result_backend: 'rpc://'
+# Job backend
+jobs:
+    host: rabbitmq
+    port: 5672
+    backend: 'rpc://'
     include:
         - pro_wes.tasks.tasks.run_workflow
         - pro_wes.tasks.tasks.cancel_run
+
+# Celery task queue
+celery:
     monitor:
         timeout: 0.1
     message_maxsize: 16777216

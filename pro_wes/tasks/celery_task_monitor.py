@@ -17,7 +17,7 @@ from celery.events.receiver import EventReceiver
 from kombu.connection import Connection  # noqa: F401
 from pymongo import collection as Collection
 
-import pro_wes.database.db_utils as db_utils
+import pro_wes.db_utils as db_utils
 
 
 # Get logger instance

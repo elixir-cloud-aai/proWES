@@ -19,7 +19,7 @@ from werkzeug.utils import secure_filename
 from flask import request
 
 from foca.config.config_parser import get_conf
-from pro_wes.errors.errors import BadRequest
+from pro_wes.exceptions import BadRequest
 from pro_wes.tasks.tasks.run_workflow import task__run_workflow
 
 
@@ -383,7 +383,10 @@ def __process_workflow_attachments(data: Dict) -> Dict:
 
             # Adjust workflow_url to point to workflow directory.
             req_data = data['api']['request']
-            workflow_url = __secure_join(workflow_dir, req_data['workflow_url'])
+            workflow_url = __secure_join(
+                workflow_dir,
+                req_data['workflow_url']
+            )
             if os.path.exists(workflow_url):
                 req_data['workflow_url'] = workflow_url
 

@@ -17,7 +17,7 @@ from celery.events.receiver import EventReceiver
 from kombu.connection import Connection  # noqa: F401
 from pymongo import collection as Collection
 
-import pro_wes.db_utils as db_utils
+import pro_wes.utils.db as db
 
 
 # Get logger instance
@@ -318,7 +318,7 @@ class TaskMonitor():
         if not event['tes_state']:
             try:
                 tes_log = self.__get_tes_task_log(tes_id=event['tes_id'])
-                db_utils.append_to_tes_task_logs(
+                db.append_to_tes_task_logs(
                     collection=self.collection,
                     task_id=event['uuid'],
                     tes_log=tes_log,
@@ -339,7 +339,7 @@ class TaskMonitor():
         # Otherwise only update state
         else:
             try:
-                db_utils.update_tes_task_state(
+                db.update_tes_task_state(
                     collection=self.collection,
                     task_id=event['uuid'],
                     tes_id=event['tes_id'],
@@ -383,7 +383,7 @@ class TaskMonitor():
         # TODO: Minimize db ops; try to compile entire object & update once
         # Update internal parameters
         if internal:
-            document = db_utils.upsert_fields_in_root_object(
+            document = db.upsert_fields_in_root_object(
                 collection=self.collection,
                 task_id=event['uuid'],
                 root='internal',
@@ -392,7 +392,7 @@ class TaskMonitor():
 
         # Update outputs
         if outputs:
-            document = db_utils.upsert_fields_in_root_object(
+            document = db.upsert_fields_in_root_object(
                 collection=self.collection,
                 task_id=event['uuid'],
                 root='api.outputs',
@@ -401,7 +401,7 @@ class TaskMonitor():
 
         # Update task logs
         if task_logs:
-            document = db_utils.upsert_fields_in_root_object(
+            document = db.upsert_fields_in_root_object(
                 collection=self.collection,
                 task_id=event['uuid'],
                 root='api',
@@ -410,7 +410,7 @@ class TaskMonitor():
 
         # Update run log parameters
         if run_log_params:
-            document = db_utils.upsert_fields_in_root_object(
+            document = db.upsert_fields_in_root_object(
                 collection=self.collection,
                 task_id=event['uuid'],
                 root='api.run_log',
@@ -442,7 +442,7 @@ class TaskMonitor():
                     ).total_seconds()
 
             if durations:
-                document = db_utils.upsert_fields_in_root_object(
+                document = db.upsert_fields_in_root_object(
                     collection=self.collection,
                     task_id=event['uuid'],
                     root='api.run_log',
@@ -452,7 +452,7 @@ class TaskMonitor():
         # Update state
         if state:
             try:
-                document = db_utils.update_run_state(
+                document = db.update_run_state(
                     collection=self.collection,
                     task_id=event['uuid'],
                     state=state,

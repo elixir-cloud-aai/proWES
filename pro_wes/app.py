@@ -4,7 +4,7 @@ from connexion import App
 from flask import current_app
 from foca.foca import foca
 
-from pro_wes.ga4gh.wes.endpoints.service_info import ServiceInfo
+from pro_wes.ga4gh.wes.routes.service_info import ServiceInfo
 from pro_wes.exceptions import NotFound
 
 

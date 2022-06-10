@@ -1,4 +1,4 @@
-"""Controller for service info endpoint."""
+"""Controllers for the `/service-info route."""
 
 import logging
 

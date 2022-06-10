@@ -11,7 +11,7 @@ from pymongo.errors import DuplicateKeyError
 
 from unittest.mock import MagicMock
 
-from pro_wes.ga4gh.wes.endpoints.service_info import (
+from pro_wes.ga4gh.wes.routes.service_info import (
     RegisterServiceInfo
 )
 from pro_wes.exceptions import (

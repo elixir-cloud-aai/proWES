@@ -8,14 +8,14 @@ from connexion import request
 from foca.utils.logging import log_traffic
 from flask import current_app
 
-from pro_wes.ga4gh.wes.endpoints import (
+from pro_wes.ga4gh.wes.routes.runs import (
 #    cancel_run,
     get_run_log,
     get_run_status,
     list_runs,
 #    run_workflow,
 )
-from pro_wes.ga4gh.wes.endpoints.service_info import ServiceInfo
+from pro_wes.ga4gh.wes.routes.service_info import ServiceInfo
 
 # Get logger instance
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ def RunWorkflow(*args, **kwargs):
 @log_traffic
 def ListRuns(*args, **kwargs):
     """Lists IDs and status of all workflow runs."""
-    response = list_runs.list_runs(
+    response = list_runs(
         config=current_app.config,
         *args,
         **kwargs
@@ -62,7 +62,7 @@ def ListRuns(*args, **kwargs):
 @log_traffic
 def GetRunLog(run_id, *args, **kwargs):
     """Returns detailed run info."""
-    response = get_run_log.get_run_log(
+    response = get_run_log(
         config=current_app.config,
         run_id=run_id,
         *args,
@@ -75,7 +75,7 @@ def GetRunLog(run_id, *args, **kwargs):
 @log_traffic
 def GetRunStatus(run_id, *args, **kwargs):
     """Returns run status."""
-    response = get_run_status.get_run_status(
+    response = get_run_status(
         config=current_app.config,
         run_id=run_id,
         *args,

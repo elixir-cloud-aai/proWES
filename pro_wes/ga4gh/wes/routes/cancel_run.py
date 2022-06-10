@@ -7,7 +7,7 @@ from celery import (Celery, uuid)
 from connexion.exceptions import Forbidden
 
 from foca.config.config_parser import get_conf
-from pro_wes.errors.errors import RunNotFound
+from pro_wes.exceptions import RunNotFound
 from pro_wes.ga4gh.wes.states import States
 from pro_wes.tasks.tasks.cancel_run import task__cancel_run
 

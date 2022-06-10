@@ -47,8 +47,6 @@ db:
                     indexes:
                         - keys:
                               id: 1
-                          options:
-                            'unique': True
 
 # API configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.APIConfig
@@ -88,6 +86,15 @@ log:
         level: 10
         handlers: [console]
 
+# Job backend
+jobs:
+    host: rabbitmq
+    port: 5672
+    backend: 'rpc://'
+    include:
+        - pro_wes.tasks.tasks.run_workflow
+        - pro_wes.tasks.tasks.cancel_run
+
 # Exception configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.ExceptionConfig
 #exceptions:
@@ -105,52 +112,32 @@ endpoints:
         default_page_size: 5
         timeout_cancel_run: 60
         timeout_run_workflow: Null
-
-# WES service info settings
-service_info:
-    contact_info: 'https://github.com/elixir-europe/proWES'
-    auth_instructions_url: 'https://www.elixir-europe.org/services/compute/aai'
-    supported_file_system_protocols:
-        - http
-    supported_wes_versions:
-        - 0.3.0
-    workflow_type_versions:
-        CWL:
-            workflow_type_version:
-                - v1.0
-    workflow_engine_versions:
-        cwl-tes: 0.2.0
-    default_workflow_engine_parameters:
-        - type: string
-          default_value: some_string
-        - type: int
-          default_value: '5'
-    tags:
-        known_tes_endpoints: 'https://tes.tsi.ebi.ac.uk/|https://tes-dev.tsi.ebi.ac.uk/|https://csc-tesk.c03.k8s-popup.csc.fi/|https://tesk.c01.k8s-popup.csc.fi/'
-        pro_wes_version: 0.14.0
-
-# TES server
-tes:
-    url: 'https://csc-tesk.c03.k8s-popup.csc.fi/'
-    timeout: 5
-    get_logs:
-        url_root: 'v1/tasks/'
-        query_params: '?view=FULL'
+    # WES service info settings
+    service_info:
+        contact_info: 'https://github.com/elixir-europe/proWES'
+        auth_instructions_url: 'https://www.elixir-europe.org/services/compute/aai'
+        supported_filesystem_protocols:
+            - http
+        supported_wes_versions:
+            - 1.0.0
+        workflow_type_versions:
+            CWL:
+                workflow_type_version:
+                    - v1.0
+        workflow_engine_versions:
+            cwl-tes: 0.2.0
+        default_workflow_engine_parameters:
+            - type: string
+              default_value: some_string
+            - type: int
+              default_value: '5'
+        tags:
+            pro_wes_version: 0.14.0
 
 # Storage
 storage:
     permanent_dir: '/data/output'
     tmp_dir: '/data/tmp'
-    remote_storage_url: 'ftp://ftp-private.ebi.ac.uk/upload/foivos'
-
-# Job backend
-jobs:
-    host: rabbitmq
-    port: 5672
-    backend: 'rpc://'
-    include:
-        - pro_wes.tasks.tasks.run_workflow
-        - pro_wes.tasks.tasks.cancel_run
 
 # Celery task queue
 celery:

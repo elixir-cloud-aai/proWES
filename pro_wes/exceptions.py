@@ -17,6 +17,11 @@ class RunNotFound(NotFound):
     pass
 
 
+class ValidationError(ValueError):
+    """Raised when an object does not conform to a schema."""
+    pass
+
+
 exceptions = {
     Exception: {
         "msg": "An unexpected error occurred.",
@@ -50,8 +55,12 @@ exceptions = {
         "msg": "The requested run wasn't found.",
         "status_code": '404',
     },
+    ValidationError: {
+        "msg": "The object does not conform to the schema.",
+        "status_code": '500',
+    },
     InternalServerError: {
-        "msg": "An unexpected error occurred",
+        "msg": "An unexpected error occurred.",
         "status_code": '500',
     },
 }

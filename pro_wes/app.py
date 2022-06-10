@@ -3,7 +3,7 @@ from pathlib import Path
 from connexion import App
 from foca.foca import foca
 
-#from pro_wes.ga4gh.wes.endpoints.service_info import RegisterServiceInfo
+from pro_wes.ga4gh.wes.endpoints.service_info import RegisterServiceInfo
 
 
 def init_app() -> App:
@@ -12,9 +12,9 @@ def init_app() -> App:
 
 
 def run_app(app: App) -> None:
-#    with app.app.app_context():
-#        service_info = RegisterServiceInfo()
-#        service_info.set_service_info_from_config()
+    with app.app.app_context():
+        service_info = RegisterServiceInfo()
+        service_info.set_service_info_from_config()
     app.run(port=app.port)
 
 

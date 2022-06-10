@@ -41,7 +41,3 @@ COPY ./ /app
 RUN cd /app \
   && python setup.py develop \
   && cd /
-
-## Copy FTP server credentials
-COPY .netrc /root
-

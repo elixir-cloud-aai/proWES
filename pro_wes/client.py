@@ -9,9 +9,7 @@ from typing import (
 )
 from urllib3 import exceptions
 
-# TODO: add .cancel_run() method
 # TODO: handle workflow attachments
-# TODO: check types
 
 
 class WesClient():
@@ -45,9 +43,38 @@ class WesClient():
         self.set_token(token)
         self.session = requests.Session()
 
+    def get_service_info(self) -> Dict[str, str]:
+        """Retrieve information about the WES instance.
+
+        Returns:
+            List of workflow runs according to WES API schema `ServiceInfo`.
+            Cf.
+            https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L373-L441
+
+        Raises:
+            requests.exceptions.ConnectionError: A connection to the WES
+                instance could not be established.
+        """
+
+        self.set_headers()
+        url = f"{self.url}/service-info"
+
+        try:
+            response = self.session.get(url)
+        except (
+            requests.exceptions.ConnectionError,
+            socket.gaierror,
+            exceptions.NewConnectionError,
+        ) as exc:
+            raise requests.exceptions.ConnectionError(
+                f"Could not connect to API endpoint at: {url}."
+            ) from exc
+        return response.json()
+
     def post_run(
         self,
         form_data: Dict[str, str],
+        files: Optional[Dict] = None,
     ) -> Dict[str, str]:
         """Send workflow run request.
 
@@ -62,6 +89,9 @@ class WesClient():
                 The following form fields are optional:
                 * `tags`
                 * `workflow_engine_parameters`
+            files: Dictionary of files to be attached. Cf.
+                https://requests.readthedocs.io/en/latest/api/#requests.request
+                for possible structures of dictionary.
 
         Returns: Workflow run identifier.
 
@@ -71,9 +101,11 @@ class WesClient():
         """
         self.set_headers()
         url = f"{self.url}/runs"
+        if files is None:
+            files = {}
 
         try:
-            response = self.session.post(url, json=form_data)
+            response = self.session.post(url, json=form_data, files=files)
         except (
             requests.exceptions.ConnectionError,
             socket.gaierror,
@@ -181,24 +213,26 @@ class WesClient():
 
         return response.json()
 
-    def get_service_info(self) -> Dict[str, str]:
-        """Retrieve information about the WES instance.
+    def cancel_run(
+        self,
+        run_id: str,
+    ) -> Dict[str, str]:
+        """Cancel workflow run.
 
-        Returns:
-            List of workflow runs according to WES API schema `ServiceInfo`.
-            Cf.
-            https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L373-L441
+        Args:
+            run_id: Workflow run identifier.
+
+        Returns: Workflow run identifier.
 
         Raises:
             requests.exceptions.ConnectionError: A connection to the WES
                 instance could not be established.
         """
-
         self.set_headers()
-        url = f"{self.url}/service-info"
+        url = f"{self.url}/runs/{run_id}/cancel"
 
         try:
-            response = self.session.get(url)
+            response = self.session.post(url)
         except (
             requests.exceptions.ConnectionError,
             socket.gaierror,
@@ -207,6 +241,7 @@ class WesClient():
             raise requests.exceptions.ConnectionError(
                 f"Could not connect to API endpoint at: {url}."
             ) from exc
+
         return response.json()
 
     def set_token(
@@ -224,7 +259,7 @@ class WesClient():
     def set_headers(
         self,
         content_accept: str = 'application/json',
-        content_type: Optional[str] = 'application/json',
+        content_type: Optional[str] = None,
     ) -> None:
         """Set session headers.
 
@@ -234,7 +269,7 @@ class WesClient():
         """
         headers = {}
         headers['Accept'] = content_accept
-        headers['Authorization'] = f"Bearer {self.token}"
         if content_type is not None:
             headers['Content-Type'] = content_type
+        headers['Authorization'] = f"Bearer {self.token}"
         self.session.headers.update(headers)

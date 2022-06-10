@@ -1,13 +1,11 @@
 """Utility function for GET /runs/{run_id} endpoint."""
 
-from connexion.exceptions import Forbidden
 import logging
-
 from typing import Dict
 
-from foca.config.config_parser import get_conf
-from pro_wes.errors.errors import RunNotFound
+from connexion.exceptions import Forbidden
 
+from pro_wes.exceptions import RunNotFound
 
 # Get logger instance
 logger = logging.getLogger(__name__)
@@ -21,8 +19,8 @@ def get_run_log(
     **kwargs
 ) -> Dict:
     """Gets detailed log information for specific run."""
-    collection_runs = get_conf(config, 'database', 'collections', 'runs')
-    document = collection_runs.find_one(
+    coll_runs = config['FOCA'].db.dbs['runStore'].collections['runs'].client
+    document = coll_runs.find_one(
         filter={'run_id': run_id},
         projection={
             'user_id': True,

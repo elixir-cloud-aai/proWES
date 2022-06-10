@@ -4,9 +4,6 @@ from typing import Dict
 
 from bson.objectid import ObjectId
 
-from foca.config.config_parser import get_conf
-
-
 # Get logger instance
 logger = logging.getLogger(__name__)
 
@@ -18,18 +15,13 @@ def list_runs(
     **kwargs
 ) -> Dict:
     """Lists IDs and status for all workflow runs."""
-    collection_runs = get_conf(config, 'database', 'collections', 'runs')
+    coll_runs = config['FOCA'].db.dbs['runStore'].collections['runs'].client
 
     # Fall back to default page size if not provided by user
     if 'page_size' in kwargs:
         page_size = kwargs['page_size']
     else:
-        page_size = (
-            config
-            ['api']
-            ['endpoint_params']
-            ['default_page_size']
-    )
+        page_size = config['FOCA'].endpoints['global']['default_page_size']
 
     # Extract/set page token
     if 'page_token' in kwargs:
@@ -43,25 +35,25 @@ def list_runs(
     # Add filter for user-owned runs if user ID is available
     if 'user_id' in kwargs:
         filter_dict['user_id'] = kwargs['user_id']
-    
+
     # Add pagination filter based on last object ID
     if page_token != '':
         filter_dict['_id'] = {'$lt': ObjectId(page_token)}
 
     # Query database for workflow runs
-    cursor = collection_runs.find(
+    cursor = coll_runs.find(
         filter=filter_dict,
         projection={
             'run_id': True,
             'api.state': True,
         }
-    # Sort results by descending object ID (+/- newest to oldest)
-    ).sort(
-        '_id', -1
-    # Implement page size limit
-    ).limit(
-        page_size
-    )
+        # Sort results by descending object ID (+/- newest to oldest)
+        ).sort(
+            '_id', -1
+        # Implement page size limit
+        ).limit(
+            page_size
+        )
 
     # Convert cursor to list
     runs_list = list(cursor)

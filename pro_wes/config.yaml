@@ -97,10 +97,10 @@ jobs:
 
 # Exception configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.ExceptionConfig
-#exceptions:
-#    required_members: [['message'], ['code']]
-#    status_member: ['code']
-#    exceptions: pro_wes.exceptions.exceptions
+exceptions:
+    required_members: [['message'], ['code']]
+    status_member: ['code']
+    exceptions: pro_wes.exceptions.exceptions
 
 # Custom configuration
 # Available in app context as attributes of `current_app.config['FOCA']`
@@ -132,7 +132,7 @@ endpoints:
             - type: int
               default_value: '5'
         tags:
-            pro_wes_version: 0.14.0
+            pro_wes_version: 0.17.0
 
 # Storage
 storage:

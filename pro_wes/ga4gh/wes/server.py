@@ -15,7 +15,7 @@ from pro_wes.ga4gh.wes.endpoints import (
     list_runs,
 #    run_workflow,
 )
-from pro_wes.ga4gh.wes.endpoints.service_info import RegisterServiceInfo
+from pro_wes.ga4gh.wes.endpoints.service_info import ServiceInfo
 
 # Get logger instance
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ def GetServiceInfo() -> Dict:
     Returns:
         An empty 201 response with headers.
     """
-    service_info = RegisterServiceInfo()
+    service_info = ServiceInfo()
     return service_info.get_service_info()
 
 

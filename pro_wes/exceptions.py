@@ -24,43 +24,43 @@ class ValidationError(ValueError):
 
 exceptions = {
     Exception: {
-        "msg": "An unexpected error occurred.",
-        "status_code": '500',
+        "message": "An unexpected error occurred.",
+        "code": '500',
     },
     BadRequestProblem: {
-        "msg": "The request is malformed.",
-        "status_code": '400',
+        "message": "The request is malformed.",
+        "code": '400',
     },
     BadRequest: {
-        "msg": "The request is malformed.",
-        "status_code": '400',
+        "message": "The request is malformed.",
+        "code": '400',
     },
     ExtraParameterProblem: {
-        "msg": "The request is malformed.",
-        "status_code": '400',
+        "message": "The request is malformed.",
+        "code": '400',
     },
     Unauthorized: {
-        "msg": " The request is unauthorized.",
-        "status_code": '401',
+        "message": " The request is unauthorized.",
+        "code": '401',
     },
     Forbidden: {
-        "msg": "The requester is not authorized to perform this action.",
-        "status_code": '403',
+        "message": "The requester is not authorized to perform this action.",
+        "code": '403',
     },
     NotFound: {
-        "msg": "The requested resource wasn't found.",
-        "status_code": '404',
+        "message": "The requested resource wasn't found.",
+        "code": '404',
     },
     RunNotFound: {
-        "msg": "The requested run wasn't found.",
-        "status_code": '404',
+        "message": "The requested run wasn't found.",
+        "code": '404',
     },
     ValidationError: {
-        "msg": "The object does not conform to the schema.",
-        "status_code": '500',
+        "message": "The object does not conform to the schema.",
+        "code": '500',
     },
     InternalServerError: {
-        "msg": "An unexpected error occurred.",
-        "status_code": '500',
+        "message": "An unexpected error occurred.",
+        "code": '500',
     },
 }

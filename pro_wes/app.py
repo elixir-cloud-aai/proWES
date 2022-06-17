@@ -4,7 +4,7 @@ from connexion import App
 from flask import current_app
 from foca.foca import foca
 
-from pro_wes.ga4gh.wes.routes.service_info import ServiceInfo
+from pro_wes.ga4gh.wes.service_info import ServiceInfo
 from pro_wes.exceptions import NotFound
 
 
@@ -16,7 +16,7 @@ def init_app() -> App:
             service_info = service_info.get_service_info()
         except NotFound:
             service_info.set_service_info(
-                data=current_app.config['FOCA'].endpoints['service_info']
+                data=current_app.config['FOCA'].controllers['service_info']
             )
     return app
 

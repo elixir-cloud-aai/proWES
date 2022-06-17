@@ -4,7 +4,8 @@ from connexion.exceptions import (
     Forbidden,
     Unauthorized,
 )
-
+from pydantic import ValidationError
+from pymongo.errors import PyMongoError
 from werkzeug.exceptions import (
     BadRequest,
     InternalServerError,
@@ -12,13 +13,27 @@ from werkzeug.exceptions import (
 )
 
 
+class NoSuitableEngine(BadRequest):
+    """Raised when the service does not know of a suitable engine to process
+    the requested workflow run.
+    """
+    pass
+
+
 class RunNotFound(NotFound):
     """Raised when workflow run with given run identifier was not found."""
     pass
 
 
-class ValidationError(ValueError):
-    """Raised when an object does not conform to a schema."""
+class IdsUnavailableProblem(PyMongoError):
+    """Raised when no unique run identifier could be found for insertion into
+    the database collection.
+    """
+    pass
+
+
+class StorageUnavailableProblem(OSError):
+    """Raised when storage is not available for OS operations."""
     pass
 
 
@@ -27,15 +42,23 @@ exceptions = {
         "message": "An unexpected error occurred.",
         "code": '500',
     },
-    BadRequestProblem: {
-        "message": "The request is malformed.",
-        "code": '400',
-    },
     BadRequest: {
         "message": "The request is malformed.",
         "code": '400',
     },
+    BadRequestProblem: {
+        "message": "The request is malformed.",
+        "code": '400',
+    },
     ExtraParameterProblem: {
+        "message": "The request is malformed.",
+        "code": '400',
+    },
+    NoSuitableEngine: {
+        "message": "No suitable workflow engine known.",
+        "code": '400',
+    },
+    ValidationError: {
         "message": "The request is malformed.",
         "code": '400',
     },
@@ -55,12 +78,16 @@ exceptions = {
         "message": "The requested run wasn't found.",
         "code": '404',
     },
-    ValidationError: {
-        "message": "The object does not conform to the schema.",
-        "code": '500',
-    },
     InternalServerError: {
         "message": "An unexpected error occurred.",
+        "code": '500',
+    },
+    IdsUnavailableProblem: {
+        "message": "No/few unique run identifiers available.",
+        "code": '500',
+    },
+    StorageUnavailableProblem: {
+        "message": "Storage is not accessible.",
         "code": '500',
     },
 }

@@ -9,8 +9,6 @@ from typing import (
 )
 from urllib3 import exceptions
 
-# TODO: handle workflow attachments
-
 
 class WesClient():
     """Client to communicate with GA4GH WES API.

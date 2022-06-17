@@ -55,7 +55,7 @@ api:
         - path:
             - api/20200806.4048014.workflow_execution_service.openapi.yaml
           add_operation_fields:
-              x-openapi-router-controller: pro_wes.ga4gh.wes.server
+              x-openapi-router-controller: pro_wes.ga4gh.wes.controllers
           add_security_fields:
               x-bearerInfoFunc: app.validate_token
           disable_auth: True
@@ -92,8 +92,7 @@ jobs:
     port: 5672
     backend: 'rpc://'
     include:
-        - pro_wes.tasks.tasks.run_workflow
-        - pro_wes.tasks.tasks.cancel_run
+        - pro_wes.tasks.run_workflow
 
 # Exception configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.ExceptionConfig
@@ -104,15 +103,23 @@ exceptions:
 
 # Custom configuration
 # Available in app context as attributes of `current_app.config['FOCA']`
-# Not validated via FOCA; if desired, validate parameters in app
-
-# Endpoint params, global and route-specific
-endpoints:
+# TODO: validate
+controllers:
     global:
         default_page_size: 5
         timeout_cancel_run: 60
         timeout_run_workflow: Null
-    # WES service info settings
+    post_runs:
+        db:
+            insert_attempts: 10
+        run_id:
+            charset: string.ascii_uppercase + string.digits
+            length: 6
+        storage: '/data'
+    celery:
+        monitor:
+            timeout: 0.1
+        message_maxsize: 16777216
     service_info:
         contact_info: 'https://github.com/elixir-europe/proWES'
         auth_instructions_url: 'https://www.elixir-europe.org/services/compute/aai'
@@ -133,14 +140,3 @@ endpoints:
               default_value: '5'
         tags:
             pro_wes_version: 0.17.0
-
-# Storage
-storage:
-    permanent_dir: '/data/output'
-    tmp_dir: '/data/tmp'
-
-# Celery task queue
-celery:
-    monitor:
-        timeout: 0.1
-    message_maxsize: 16777216

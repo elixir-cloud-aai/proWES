@@ -4,12 +4,9 @@ import requests
 import socket
 from typing import (
     Dict,
-    List,
     Optional,
 )
 from urllib3 import exceptions
-
-# TODO: handle workflow attachments
 
 
 class WesClient():
@@ -43,13 +40,12 @@ class WesClient():
         self.set_token(token)
         self.session = requests.Session()
 
-    def get_service_info(self) -> Dict[str, str]:
+    def get_service_info(self) -> Dict:
         """Retrieve information about the WES instance.
 
         Returns:
-            List of workflow runs according to WES API schema `ServiceInfo`.
-            Cf.
-            https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L373-L441
+            Response object according to WES API schema `ServiceInfo`. Cf.
+                https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L373-L441
 
         Raises:
             requests.exceptions.ConnectionError: A connection to the WES
@@ -75,7 +71,7 @@ class WesClient():
         self,
         form_data: Dict[str, str],
         files: Optional[Dict] = None,
-    ) -> Dict[str, str]:
+    ) -> str:
         """Send workflow run request.
 
         Args:
@@ -93,7 +89,8 @@ class WesClient():
                 https://requests.readthedocs.io/en/latest/api/#requests.request
                 for possible structures of dictionary.
 
-        Returns: Workflow run identifier.
+        Returns:
+            Workflow run identifier.
 
         Raises:
             requests.exceptions.ConnectionError: A connection to the WES
@@ -117,13 +114,12 @@ class WesClient():
 
         return response.json()
 
-    def get_runs(self) -> List[Dict[str, str]]:
+    def get_runs(self) -> Dict:
         """Retrieve list of workflow runs.
 
         Returns:
-            List of workflow runs according to WES API schema
-            `RunListResponse`. Cf.
-            https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L495-L510
+            Response object according to WES API schema `RunListResponse`. Cf.
+                https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L495-L510
 
         Raises:
             requests.exceptions.ConnectionError: A connection to the WES
@@ -149,15 +145,15 @@ class WesClient():
     def get_run(
         self,
         run_id: str,
-    ) -> Dict[str, str]:
+    ) -> Dict:
         """Retrieve detailed information about a workflow run.
 
         Args:
             run_id: Workflow run identifier.
 
         Returns:
-            List of workflow runs according to WES API schema `RunLog`. Cf.
-            https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L511-L533
+            Response object according to WES API schema `RunLog`. Cf.
+                https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L511-L533
 
         Raises:
             requests.exceptions.ConnectionError: A connection to the WES
@@ -183,15 +179,15 @@ class WesClient():
     def get_run_status(
         self,
         run_id: str,
-    ) -> Dict[str, str]:
+    ) -> Dict:
         """Retrieve status information about a workflow run.
 
         Args:
             run_id: Workflow run identifier.
 
         Returns:
-            List of workflow runs according to WES API schema `RunStatus`. Cf.
-            https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L585-L594
+            Response object according to WES API schema `RunStatus`. Cf.
+                https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L585-L594
 
         Raises:
             requests.exceptions.ConnectionError: A connection to the WES
@@ -216,13 +212,14 @@ class WesClient():
     def cancel_run(
         self,
         run_id: str,
-    ) -> Dict[str, str]:
+    ) -> str:
         """Cancel workflow run.
 
         Args:
             run_id: Workflow run identifier.
 
-        Returns: Workflow run identifier.
+        Returns:
+            Workflow run identifier.
 
         Raises:
             requests.exceptions.ConnectionError: A connection to the WES

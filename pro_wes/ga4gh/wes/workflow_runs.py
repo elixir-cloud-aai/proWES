@@ -25,17 +25,25 @@ from werkzeug.utils import secure_filename
 
 from pro_wes.client_wes import WesClient
 from pro_wes.exceptions import (
+    BadRequest,
+    EngineUnavailable,
     Forbidden,
+    InternalServerError,
     IdsUnavailableProblem,
     RunNotFound,
     StorageUnavailableProblem,
+    Unauthorized,
 )
 from pro_wes.ga4gh.wes.models import (
     Attachment,
     DbDocument,
+    ErrorResponse,
     RunRequest,
+    State,
     WesEndpoint,
 )
+from pro_wes.tasks.track_run_progress import task__track_run_progress
+from pro_wes.utils.db import DbDocumentConnector
 
 logger = logging.getLogger(__name__)
 
@@ -72,15 +80,17 @@ class WorkflowRuns:
             Workflow run identifier.
         """
         document: DbDocument = DbDocument()
+        controller_config = self.foca_config.controllers['post_runs']
 
         # validate and attach request
-        document.run_log.run_request = self._validate_run_request(
+        document.run_log.request = self._validate_run_request(
             form_data=request.form,
         )
 
         # get and attach suitable WES endpoint
-        # TODO: implement
-        document.wes_endpoint = WesEndpoint(url="https://my.wes.com")
+        document.wes_endpoint = WesEndpoint(
+            host="https://csc-wes-noauth.rahtiapp.fi",
+        )
 
         # get and attach workflow run owner
         document.user_id = kwargs.get('user_id', None)
@@ -91,15 +101,70 @@ class WorkflowRuns:
         # write workflow attachments
         self._save_attachments(attachments=document_stored.attachments)
 
-        # run workflow in background
-        # TODO: implement
+        # instantiate WES client
+        wes_client: WesClient = WesClient(
+            host=document_stored.wes_endpoint.host,
+            base_path=document_stored.wes_endpoint.base_path,
+            token=kwargs.get('jwt', None),
+        )
+
+        # instantiate database connector
+        db_connector = DbDocumentConnector(
+            collection=self.db_client,
+            task_id=document_stored.task_id,
+        )
+
+        # forward incoming WES request and validate response
+        url = (
+            f"{document_stored.wes_endpoint.host.rstrip('/')}/"
+            f"{document_stored.wes_endpoint.base_path.strip('/')}"
+        )
+        logger.info(
+            f"Sending workflow run '{document_stored.run_log.run_id}' with "
+            f"task identifier '{document_stored.task_id}' to WES endpoint "
+            f"hosted at: {url}"
+        )
+        try:
+            response = wes_client.post_run(
+                form_data=document.run_log.request.dict(),
+                timeout=controller_config['timeout']['post'],
+            )
+        except EngineUnavailable:
+            db_connector.update_task_state(state=State.SYSTEM_ERROR.value)
+            raise
+        if isinstance(response, ErrorResponse):
+            db_connector.update_task_state(state=State.SYSTEM_ERROR.value)
+            if response.status_code == 400:
+                raise BadRequest
+            elif response.status_code == 401:
+                raise Unauthorized
+            elif response.status_code == 403:
+                raise Forbidden
+            else:
+                raise InternalServerError
+        document_stored: DbDocument = (
+            db_connector.upsert_fields_in_root_object(
+                root='wes_endpoint',
+                run_id=response.run_id,
+            )
+        )
+
+        # track workflow progress in background
+        self._track_run_progress(
+            task_id=document_stored.task_id,
+            remote_host=document_stored.wes_endpoint.host,
+            remote_base_path=document_stored.wes_endpoint.base_path,
+            remote_run_id=document_stored.wes_endpoint.run_id,
+            jwt=kwargs.get('jwt', None),
+            timeout=controller_config['timeout']['job'],
+        )
 
         return {'run_id': document_stored.run_log.run_id}
 
     # controller method for `GET /runs`
     def list_runs(
         self,
-        **kwargs
+        **kwargs,
     ) -> Dict:
         """Return list of workflow runs.
 
@@ -115,7 +180,7 @@ class WorkflowRuns:
             page_size = kwargs['page_size']
         else:
             page_size = (
-                self.foca_config.controllers['global']['default_page_size']
+                self.foca_config.controllers['list_runs']['default_page_size']
             )
 
         # extract/set page token
@@ -176,7 +241,7 @@ class WorkflowRuns:
     def get_run_log(
         self,
         run_id: str,
-        **kwargs
+        **kwargs,
     ) -> Dict:
         """Return detailed information about a workflow run.
 
@@ -223,7 +288,7 @@ class WorkflowRuns:
     def get_run_status(
         self,
         run_id: str,
-        **kwargs
+        **kwargs,
     ) -> Dict:
         """Return status information about a workflow run.
 
@@ -272,7 +337,7 @@ class WorkflowRuns:
     def cancel_run(
         self,
         run_id: str,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, str]:
         """Cancel workflow run.
 
@@ -294,8 +359,9 @@ class WorkflowRuns:
             filter={'run_log.run_id': run_id},
             projection={
                 'user_id': True,
-                'endpoint.url': True,
-                'endpoint.base_path': True,
+                'wes_endpoint.host': True,
+                'wes_endpoint.base_path': True,
+                'wes_endpoint.run_id': True,
                 '_id': False,
             }
         )
@@ -313,12 +379,12 @@ class WorkflowRuns:
         )
 
         # cancel workflow run
-        wes_client = WesClient(
-            url=document['endpoint']['url'],
-            base_path=document['endpoint']['base_path'],
+        wes_client: WesClient = WesClient(
+            host=document['wes_endpoint']['host'],
+            base_path=document['wes_endpoint']['base_path'],
             token=kwargs.get('jwt', None),
         )
-        wes_client.cancel_run(run_id=run_id)
+        wes_client.cancel_run(run_id=document['wes_endpoint']['run_id'])
 
         return {'run_id': run_id}
 
@@ -367,6 +433,7 @@ class WorkflowRuns:
             document.attachments = self._process_attachments(
                 work_dir=work_dir,
             )
+            document.
 
             # insert document into database
             try:
@@ -393,7 +460,9 @@ class WorkflowRuns:
             List of `Attachment` model instances.
         """
         attachments = []
+        logger.warning(request.files)
         files = request.files.getlist("workflow_attachment")
+        logger.warning(f"FILES: {files}")
         for file in files:
             attachments.append(
                 Attachment(
@@ -404,7 +473,46 @@ class WorkflowRuns:
                     ))
                 )
             )
+        logger.warning(f"ATTACHMENTS: {attachments}")
         return attachments
+
+    def _track_run_progress(
+        self,
+        task_id: str,
+        remote_host: str,
+        remote_base_path: str,
+        remote_run_id: str,
+        jwt: Optional[str] = None,
+        timeout: Optional[int] = None,
+    ) -> None:
+        """Asynchronously track the workflow run request on the remote WES.
+
+        Args:
+            task_id: Identifier for the background job.
+            remote_host: Host at which the WES API is served that is processing
+                this request; note that this should include the path
+                information but *not* the base path path defined in the WES API
+                specification; e.g., specify https://my.wes.com/api if the
+                actual API is hosted at https://my.wes.com/api/ga4gh/wes/v1.
+            remote_base_path: Override the default path suffix defined in the
+                WES API specification, i.e., `/ga4gh/wes/v1`.
+            remote_run_id: Workflow run identifier on remote WES service.
+            jwt: Authorization bearer token to be passed on with workflow run
+                request to external engine.
+            timeout: Timeout for the job. Set to `None` to disable timeout.
+        """
+        task__track_run_progress.apply_async(
+            None,
+            {
+                'jwt': jwt,
+                'remote_host': remote_host,
+                'remote_base_path': remote_base_path,
+                'remote_run_id': remote_run_id
+            },
+            task_id=task_id,
+            soft_time_limit=timeout,
+        )
+        return None
 
     @staticmethod
     def _validate_run_request(
@@ -422,6 +530,8 @@ class WorkflowRuns:
             k: v[0] if len(v) == 1 else v for
             k, v in dict_of_lists.items()
         }
+        # remove 'workflow_attachment' field
+        dict_atomic.pop("workflow_attachment", None)
         model_instance = RunRequest(**dict_atomic)
         return model_instance
 
@@ -448,6 +558,7 @@ class WorkflowRuns:
             attachments: List of `Attachment` model instances.
         """
         files = request.files.getlist("workflow_attachment")
+        logger.warning(files)
         for attachment in attachments:
             with open(attachment.path, "wb") as dest:
                 for file in files:

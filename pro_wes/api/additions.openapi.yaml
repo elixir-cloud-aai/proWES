@@ -1,0 +1,105 @@
+openapi: 3.0.2
+info:
+  title: 'proWES'
+  description: |
+    Gateway GA4GH Workflow Execution Service (WES) API implementation; forwards
+    incoming run requests to known WES instances and harmonizes the experience
+    More information on [GitHub](https://github.com/elixir-cloud-aai/proWES).
+  version: 1.0.0
+  license:
+    name: 'Apache 2.0'
+    url: 'http://www.apache.org/licenses/LICENSE-2.0'
+  contact:
+    name: 'ELIXIR Cloud & AAI'
+    email: 'alexander.kanitz@alumni.ethz.ch'
+servers:
+  - url: /ga4gh/wes/v1
+paths:
+  /service-info:
+    post:
+      summary: Register service info.
+      description: Create or update the service info.
+      operationId: postServiceInfo
+      tags:
+        - pro-wes
+      requestBody:
+        description: Service info to add.
+        required: true
+        content:
+          application/json:
+            schema:
+              x-body-name: service_info
+              $ref: '#/components/schemas/ServiceInfoRegister'
+      responses:
+        '201':
+          description: The service info was successfully created.
+        400:
+          description: The request is malformed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        401:
+          description: The request is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        403:
+          description: The requester is not authorized to perform this action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ServiceInfoRegister:
+      title: ServiceInfoRegister
+      allOf:
+        - type: object
+          properties:
+            workflow_type_versions:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/WorkflowTypeVersion'
+            supported_wes_versions:
+              type: array
+              items:
+                type: string
+              description: The version(s) of the WES schema supported by this service
+            supported_filesystem_protocols:
+              type: array
+              items:
+                type: string
+              description: The filesystem protocols supported by this service, currently these may include common protocols using the terms 'http', 'https', 'sftp', 's3', 'gs', 'file', or 'synapse', but others  are possible and the terms beyond these core protocols are currently not fixed.   This section reports those protocols (either common or not) supported by this WES service.
+            workflow_engine_versions:
+              type: object
+              additionalProperties:
+                type: string
+            default_workflow_engine_parameters:
+              type: array
+              items:
+                $ref: '#/components/schemas/DefaultWorkflowEngineParameter'
+              description: Each workflow engine can present additional parameters that can be sent to the workflow engine. This message will list the default values, and their types for each workflow engine.
+            auth_instructions_url:
+              type: string
+              description: A web page URL with human-readable instructions on how to get an authorization token for use with a specific WES endpoint.
+            tags:
+              type: object
+              additionalProperties:
+                type: string
+                description: A message containing useful information about the running service, including supported versions and default settings.
+          required:
+            - workflow_type_versions
+            - supported_wes_versions
+            - supported_filesystem_protocols
+            - workflow_engine_versions
+            - default_workflow_engine_parameters
+            - auth_instructions_url
+            - tags

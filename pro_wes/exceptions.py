@@ -13,6 +13,16 @@ from werkzeug.exceptions import (
 )
 
 
+class EngineProblem(InternalServerError):
+    """The external workflow engine appears to experience problems."""
+    pass
+
+
+class EngineUnavailable(EngineProblem):
+    """The external workflow engine is not available."""
+    pass
+
+
 class NoSuitableEngine(BadRequest):
     """Raised when the service does not know of a suitable engine to process
     the requested workflow run.
@@ -77,6 +87,10 @@ exceptions = {
     RunNotFound: {
         "message": "The requested run wasn't found.",
         "code": '404',
+    },
+    EngineUnavailable: {
+        "message": "Could not reach remote WES service.",
+        "code": '500',
     },
     InternalServerError: {
         "message": "An unexpected error occurred.",

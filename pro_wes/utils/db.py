@@ -1,73 +1,116 @@
 """Utility functions for MongoDB document insertion, updates and retrieval."""
 
-from typing import (Any, List, Mapping, Optional)
+import logging
+from typing import (
+    Mapping,
+    Optional,
+)
 
 from pymongo.collection import ReturnDocument
 from pymongo import collection as Collection
 
+from pro_wes.ga4gh.wes.models import (
+    DbDocument,
+    State,
+)
 
-def update_run_state(
-    collection: Collection,
-    task_id: str,
-    state: str = 'UNKNOWN'
-) -> Optional[Mapping[Any, Any]]:
-    """Updates state of workflow run and returns document."""
-    return collection.find_one_and_update(
-        {'task_id': task_id},
-        {'$set': {'api.state': state}},
-        return_document=ReturnDocument.AFTER
-    )
+logger = logging.getLogger(__name__)
 
 
-def upsert_fields_in_root_object(
-    collection: Collection,
-    task_id: str,
-    root: str,
-    **kwargs
-) -> Optional[Mapping[Any, Any]]:
-    """Inserts (or updates) fields in(to) the same root (object) field and
-    returns document.
-    """
-    return collection.find_one_and_update(
-        {'task_id': task_id},
-        {'$set': {
-            '.'.join([root, key]):
-                value for (key, value) in kwargs.items()
-        }},
-        return_document=ReturnDocument.AFTER
-    )
+class DbDocumentConnector:
 
+    def __init__(
+        self,
+        collection: Collection,
+        task_id: str,
+    ) -> None:
+        """MongoDB connector to a given `pro_wes.ga4gh.wes.models.DbDocument`
+            document.
 
-def update_tes_task_state(
-    collection: Collection,
-    task_id: str,
-    tes_id: str,
-    state: str
-) -> Optional[Mapping[Any, Any]]:
-    """Updates `state` field in TES task log and returns updated document."""
-    return collection.find_one_and_update(
-        {'task_id': task_id, 'api.task_logs': {'$elemMatch': {'id': tes_id}}},
-        {'$set': {'api.task_logs.$.state': state}},
-        return_document=ReturnDocument.AFTER
-    )
+        Args:
+            collection: Database collection.
+            task_id: Celery task identifier.
+        """
+        self.collection: Collection = collection
+        self.task_id: str = task_id
 
+    def get_document(
+        self,
+        projection: Mapping = {'_id': False},
+    ) -> DbDocument:
+        """Get document associated with task.
 
-def append_to_tes_task_logs(
-    collection: Collection,
-    task_id: str,
-    tes_log: str
-) -> Optional[Mapping[Any, Any]]:
-    """Appends task log to TES task logs and returns updated document."""
-    return collection.find_one_and_update(
-        {'task_id': task_id},
-        {'$push': {'api.task_logs': tes_log}},
-        return_document=ReturnDocument.AFTER
-    )
+        Args:
+            projection: A projection object indicating which fields of the
+                document to return. By default, all fields except the MongoDB
+                identifier `_id` are returned.
 
+        Returns:
+            Instance of `pro_wes.ga4gh.wes.models.DbDocument` associated with
+                the task.
 
-def find_tes_task_ids(
-    collection: Collection,
-    run_id: str
-) -> List:
-    """Get list of TES task ids associated with a run of interest."""
-    return collection.distinct('api.task_logs.id', {'run_id': run_id})
+        Raise:
+            ValueError: Returned document does not conform to schema.
+        """
+        document_unvalidated = self.collection.find_one(
+            filter={'task_id': self.task_id},
+            projection=projection,
+        )
+        try:
+            document: DbDocument = DbDocument(**document_unvalidated)
+        except Exception as exc:
+            raise ValueError(
+                "Database document does not conform to schema: "
+                f"{document_unvalidated}"
+            ) from exc
+        return document
+
+    def update_task_state(
+        self,
+        state: str = 'UNKNOWN',
+    ) -> None:
+        """Update task status.
+
+        Args:
+            state: New task status; one of `pro_wes.ga4gh.wes.models.State`.
+
+        Raises:
+            Passed
+        """
+        try:
+            State(state)
+        except Exception as exc:
+            raise ValueError(
+                f"Unknown state: {state}"
+            ) from exc
+        self.collection.find_one_and_update(
+            {'task_id': self.task_id},
+            {'$set': {'run_log.state': state}},
+        )
+        logger.info(f"[{self.task_id}] {state}")
+        return None
+
+    def upsert_fields_in_root_object(
+        self,
+        root: str,
+        **kwargs,
+    ) -> Optional[Mapping]:
+        """Insert (or update) fields in(to) the same root object and return
+        document.
+        """
+        document_unvalidated = self.collection.find_one_and_update(
+            {'task_id': self.task_id},
+            {'$set': {
+                '.'.join([root, key]):
+                    value for (key, value) in kwargs.items()
+            }},
+            return_document=ReturnDocument.AFTER
+        )
+        try:
+            document: DbDocument = DbDocument(**document_unvalidated)
+        except Exception as exc:
+            raise ValueError(
+                "Database document does not conform to schema: "
+                f"{document_unvalidated}"
+            ) from exc
+        return document

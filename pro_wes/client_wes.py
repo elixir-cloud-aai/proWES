@@ -1,22 +1,32 @@
 """Basic WES client."""
 
 import requests
-import socket
+from requests.exceptions import RequestException
 from typing import (
     Dict,
     Optional,
 )
-from urllib3 import exceptions
+
+from pro_wes.exceptions import EngineUnavailable
+from pro_wes.ga4gh.wes.models import (
+    ErrorResponse,
+    RunRequest,
+    RunListResponse,
+    RunStatus,
+    RunId,
+    RunLog,
+    ServiceInfo,
+)
 
 
 class WesClient():
     """Client to communicate with GA4GH WES API.
 
     Arguments:
-        url: URL at which the WES API is hosted, but _not_ containing the base
-            path defined in the WES API specification; e.g.,
-            https://my.wes.com/api, if the actual API is hosted at
-            https://my.wes.com/api/ga4gh/wes/v1.
+        host: Host at which the WES API is served; note that this should
+            include the path information but *not* the base path path defined
+            in the WES API specification; e.g., specify https://my.wes.com/api
+            if the actual API is hosted at https://my.wes.com/api/ga4gh/wes/v1.
         base_path: Override the default path suffix defined in the WES API
             specification.
         token: Bearer token to send along with any WES API requests. Set if
@@ -31,47 +41,53 @@ class WesClient():
     """
     def __init__(
         self,
-        url: str,
+        host: str,
         base_path: str = "/ga4gh/wes/v1",
         token: Optional[str] = None,
     ) -> None:
         """Class Constructor"""
-        self.url = f"{url}{base_path}"
+        self.url = f"{host.rstrip('/')}/{base_path.strip('/')}"
         self.set_token(token)
         self.session = requests.Session()
 
-    def get_service_info(self) -> Dict:
+    def get_service_info(
+        self,
+        **kwargs,
+    ) -> ServiceInfo:
         """Retrieve information about the WES instance.
+
+        Args:
+            **kwargs: Additional keyword arguments passed along with request.
 
         Returns:
             Response object according to WES API schema `ServiceInfo`. Cf.
                 https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L373-L441
-
-        Raises:
-            requests.exceptions.ConnectionError: A connection to the WES
-                instance could not be established.
         """
-
         self.set_headers()
         url = f"{self.url}/service-info"
-
         try:
-            response = self.session.get(url)
-        except (
-            requests.exceptions.ConnectionError,
-            socket.gaierror,
-            exceptions.NewConnectionError,
-        ) as exc:
-            raise requests.exceptions.ConnectionError(
-                f"Could not connect to API endpoint at: {url}."
+            response_unvalidated = self.session.get(url, **kwargs).json()
+        except (RequestException, ValueError) as exc:
+            raise EngineUnavailable(
+                "external workflow engine unavailable"
             ) from exc
-        return response.json()
+        try:
+            response = ServiceInfo(**response_unvalidated)
+        except Exception:
+            try:
+                response = ErrorResponse(**response_unvalidated)
+            except Exception as exc:
+                raise ValueError(
+                    f"invalid response: {response_unvalidated}"
+                ) from exc
+        return response
 
     def post_run(
         self,
         form_data: Dict[str, str],
         files: Optional[Dict] = None,
-    ) -> str:
+        **kwargs,
+    ) -> RunId:
         """Send workflow run request.
 
         Args:
@@ -88,158 +104,207 @@ class WesClient():
             files: Dictionary of files to be attached. Cf.
                 https://requests.readthedocs.io/en/latest/api/#requests.request
                 for possible structures of dictionary.
+            timeout: Request timeout in seconds. Set to `None` to disable
+                timeout.
 
         Returns:
-            Workflow run identifier.
+            WES API schema `RunId`. Cf.
+                https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L495-L510
 
         Raises:
-            requests.exceptions.ConnectionError: A connection to the WES
-                instance could not be established.
+            ValueError: The form data does not conform to the expected schema.
+            ValueError: The response does not conform to any of the expected
+                schemas.
         """
         self.set_headers()
         url = f"{self.url}/runs"
         if files is None:
             files = {}
-
         try:
-            response = self.session.post(url, json=form_data, files=files)
-        except (
-            requests.exceptions.ConnectionError,
-            socket.gaierror,
-            exceptions.NewConnectionError,
-        ) as exc:
-            raise requests.exceptions.ConnectionError(
-                f"Could not connect to API endpoint at: {url}."
+            RunRequest(**form_data)
+        except Exception as exc:
+            raise ValueError(
+                f"invalid form data: {form_data}"
             ) from exc
+        try:
+            response_unvalidated = self.session.post(
+                url,
+                data=form_data,
+                files=files,
+                **kwargs,
+            ).json()
+        except (RequestException, ValueError) as exc:
+            raise EngineUnavailable(
+                "external workflow engine unavailable"
+            ) from exc
+        try:
+            response = RunId(**response_unvalidated)
+        except Exception:
+            try:
+                response = ErrorResponse(**response_unvalidated)
+            except Exception as exc:
+                raise ValueError(
+                    f"invalid response: {response_unvalidated}"
+                ) from exc
+        return response
 
-        return response.json()
-
-    def get_runs(self) -> Dict:
+    def get_runs(
+        self,
+        **kwargs,
+    ) -> RunListResponse:
         """Retrieve list of workflow runs.
 
+        Args:
+            timeout: Request timeout in seconds. Set to `None` to disable
+                timeout.
+
         Returns:
-            Response object according to WES API schema `RunListResponse`. Cf.
+            WES API schema `RunListResponse`. Cf.
                 https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L495-L510
 
         Raises:
-            requests.exceptions.ConnectionError: A connection to the WES
-                instance could not be established.
+            ValueError: The response does not conform to any of the expected
+                schemas.
         """
 
         self.set_headers()
         url = f"{self.url}/runs"
-
         try:
-            response = self.session.get(url)
-        except (
-            requests.exceptions.ConnectionError,
-            socket.gaierror,
-            exceptions.NewConnectionError,
-        ) as exc:
-            raise requests.exceptions.ConnectionError(
-                f"Could not connect to API endpoint at: {url}."
+            response_unvalidated = self.session.get(url, **kwargs).json()
+        except (RequestException, ValueError) as exc:
+            raise EngineUnavailable(
+                "external workflow engine unavailable"
             ) from exc
-
-        return response.json()
+        try:
+            response = RunListResponse(**response_unvalidated)
+        except Exception:
+            try:
+                response = ErrorResponse(**response_unvalidated)
+            except Exception as exc:
+                raise ValueError(
+                    f"invalid response: {response_unvalidated}"
+                ) from exc
+        return response
 
     def get_run(
         self,
         run_id: str,
-    ) -> Dict:
+        **kwargs,
+    ) -> RunLog:
         """Retrieve detailed information about a workflow run.
 
         Args:
             run_id: Workflow run identifier.
+            timeout: Request timeout in seconds. Set to `None` to disable
+                timeout.
 
         Returns:
-            Response object according to WES API schema `RunLog`. Cf.
+            WES API schema `RunLog`. Cf.
                 https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L511-L533
 
         Raises:
-            requests.exceptions.ConnectionError: A connection to the WES
-                instance could not be established.
+            ValueError: The response does not conform to any of the expected
+                schemas.
         """
 
         self.set_headers()
         url = f"{self.url}/runs/{run_id}"
-
         try:
-            response = self.session.get(url)
-        except (
-            requests.exceptions.ConnectionError,
-            socket.gaierror,
-            exceptions.NewConnectionError,
-        ) as exc:
-            raise requests.exceptions.ConnectionError(
-                f"Could not connect to API endpoint at: {url}."
+            response_unvalidated = self.session.get(url, **kwargs).json()
+        except (RequestException, ValueError) as exc:
+            raise EngineUnavailable(
+                "external workflow engine unavailable"
             ) from exc
-
-        return response.json()
+        # skip validation; workaround for cwl-WES
+        return response_unvalidated
+        try:
+            response = RunLog(**response_unvalidated)
+        except Exception:
+            try:
+                response = ErrorResponse(**response_unvalidated)
+            except Exception as exc:
+                raise ValueError(
+                    f"invalid response: {response_unvalidated}"
+                ) from exc
+        return response
 
     def get_run_status(
         self,
         run_id: str,
-    ) -> Dict:
+        **kwargs,
+    ) -> RunStatus:
         """Retrieve status information about a workflow run.
 
         Args:
             run_id: Workflow run identifier.
+            timeout: Request timeout in seconds. Set to `None` to disable
+                timeout.
 
         Returns:
-            Response object according to WES API schema `RunStatus`. Cf.
+            WES API schema `RunStatus`. Cf.
                 https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L585-L594
 
         Raises:
-            requests.exceptions.ConnectionError: A connection to the WES
-                instance could not be established.
+            ValueError: The response does not conform to any of the expected
+                schemas.
         """
         self.set_headers()
         url = f"{self.url}/runs/{run_id}/status"
-
         try:
-            response = self.session.get(url)
-        except (
-            requests.exceptions.ConnectionError,
-            socket.gaierror,
-            exceptions.NewConnectionError,
-        ) as exc:
-            raise requests.exceptions.ConnectionError(
-                f"Could not connect to API endpoint at: {url}."
+            response_unvalidated = self.session.get(url, **kwargs).json()
+        except (RequestException, ValueError) as exc:
+            raise EngineUnavailable(
+                "external workflow engine unavailable"
             ) from exc
-
-        return response.json()
+        try:
+            response = RunStatus(**response_unvalidated)
+        except Exception:
+            try:
+                response = ErrorResponse(**response_unvalidated)
+            except Exception as exc:
+                raise ValueError(
+                    f"invalid response: {response_unvalidated}"
+                ) from exc
+        return response
 
     def cancel_run(
         self,
         run_id: str,
-    ) -> str:
+        **kwargs,
+    ) -> RunId:
         """Cancel workflow run.
 
         Args:
             run_id: Workflow run identifier.
+            timeout: Request timeout in seconds. Set to `None` to disable
+                timeout.
 
         Returns:
-            Workflow run identifier.
+            WES API schema `RunId`. Cf.
+                https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L585-L594
 
         Raises:
-            requests.exceptions.ConnectionError: A connection to the WES
-                instance could not be established.
+            ValueError: The response does not conform to any of the expected
+                schemas.
         """
         self.set_headers()
         url = f"{self.url}/runs/{run_id}/cancel"
-
         try:
-            response = self.session.post(url)
-        except (
-            requests.exceptions.ConnectionError,
-            socket.gaierror,
-            exceptions.NewConnectionError,
-        ) as exc:
-            raise requests.exceptions.ConnectionError(
-                f"Could not connect to API endpoint at: {url}."
+            response_unvalidated = self.session.post(url, **kwargs).json()
+        except (RequestException, ValueError) as exc:
+            raise EngineUnavailable(
+                "external workflow engine unavailable"
             ) from exc
-
-        return response.json()
+        try:
+            response = RunId(**response_unvalidated)
+        except Exception:
+            try:
+                response = ErrorResponse(**response_unvalidated)
+            except Exception as exc:
+                raise ValueError(
+                    f"invalid response: {response_unvalidated}"
+                ) from exc
+        return response
 
     def set_token(
         self,

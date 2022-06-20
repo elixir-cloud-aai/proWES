@@ -11,17 +11,15 @@ class States():
         'RUNNING',
     ]
 
+    FINISHED = [
+        'COMPLETE',
+        'EXECUTOR_ERROR',
+        'SYSTEM_ERROR',
+        'CANCELED',
+    ]
+
     UNFINISHED = CANCELABLE + [
         'CANCELING',
     ]
 
-    FINISHED = [
-        'COMPLETE',
-        'CANCELED',
-        'EXECUTOR_ERROR',
-        'SYSTEM_ERROR',
-    ]
-
-    DEFINED = UNFINISHED + FINISHED
-
-    ALL = UNDEFINED + DEFINED
+    ALL = FINISHED + UNFINISHED + UNDEFINED

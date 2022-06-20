@@ -5,7 +5,7 @@ from typing import Optional
 
 from pymongo import collection as Collection
 
-import pro_wes.db_utils as db_utils
+import pro_wes.utils.db as db
 
 
 # Get logger instance
@@ -31,7 +31,7 @@ def set_run_state(
     else:
         _task_id = task_id
     try:
-        document = db_utils.update_run_state(
+        document = db.update_run_state(
             collection=collection,
             task_id=_task_id,
             state=state,

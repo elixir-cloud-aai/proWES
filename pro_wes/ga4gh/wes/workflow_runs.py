@@ -433,7 +433,6 @@ class WorkflowRuns:
             document.attachments = self._process_attachments(
                 work_dir=work_dir,
             )
-            document.
 
             # insert document into database
             try:

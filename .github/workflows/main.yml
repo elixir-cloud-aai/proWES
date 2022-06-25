@@ -10,10 +10,6 @@ jobs:
   code-style:
     name: Run linting
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        python-version: ["3.10"]
 
     steps:
       - name: Check out repository
@@ -21,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.10
       - name: Install requirements
         run: |
           pip install -e .
@@ -32,10 +28,6 @@ jobs:
   build-publish:
     runs-on: ubuntu-latest
     needs: [code-style]
-    strategy:
-      fail-fast: true
-      matrix:
-        python-version: ["3.10"]
 
     steps:
       - name: Check out repository
@@ -49,7 +41,6 @@ jobs:
         run: |
           set -x
           export ON_DEFAULT=FALSE
-          export PY_VERSION=${{ matrix.python-version }}
           export DEFAULT_BRANCH=${{ github.event.repository.default_branch }}
           if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             export BRANCH_NAME=${GITHUB_REF##*/}

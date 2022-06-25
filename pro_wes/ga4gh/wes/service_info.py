@@ -32,7 +32,7 @@ class ServiceInfo:
             object_id: Database identifier for service info.
         """
         self.config: Dict = current_app.config
-        self.foca_config: Config = self.config['FOCA']
+        self.foca_config: Config = self.config.foca
         self.db_client_service_info: Collection = (
             self.foca_config.db.dbs['runStore']
             .collections['service_info'].client

@@ -1,5 +1,5 @@
 # FOCA configuration
-# Available in app context as attributes of `current_app.config['FOCA']`
+# Available in app context as attributes of `current_app.config.foca`
 # Automatically validated via FOCA
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html
 
@@ -88,7 +88,8 @@ log:
         level: 10
         handlers: [console]
 
-# Job backend
+# Background job configuration
+# Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.JobsConfig
 jobs:
     host: rabbitmq
     port: 5672
@@ -104,30 +105,22 @@ exceptions:
     exceptions: pro_wes.exceptions.exceptions
 
 # Custom configuration
-# Available in app context as attributes of `current_app.config['FOCA']`
-controllers:
+# Available in app context as attributes of `current_app.config.foca`
+custom:
+    defaults:
+        timeout: 2
     post_runs:
-        db:
-            insert_attempts: 10
-        run_id:
-            charset: string.ascii_uppercase + string.digits
-            length: 6
-        storage: '/data'
-        timeout:
-            post: null
-            poll: 2
-            job: null
-        polling:
-            wait: 3
-            attempts: 100
+        db_insert_attempts: 10
+        id_charset: string.ascii_uppercase + string.digits
+        id_length: 6
+        polling_attempts: 100
+        polling_wait: 3
+        storage_path: '/data'
+        timeout_job: null
+        timeout_post: null
     list_runs:
         default_page_size: 5
-    celery:
-        monitor:
-            timeout: 0.1
-        message_maxsize: 16777216
     service_info:
-        contact_info: 'https://github.com/elixir-europe/proWES'
         auth_instructions_url: 'https://www.elixir-europe.org/services/compute/aai'
         supported_filesystem_protocols:
             - http
@@ -137,12 +130,5 @@ controllers:
             CWL:
                 workflow_type_version:
                     - v1.0
-        workflow_engine_versions:
-            cwl-tes: 0.2.0
-        default_workflow_engine_parameters:
-            - type: string
-              default_value: some_string
-            - type: int
-              default_value: '5'
         tags:
-            pro_wes_version: 0.17.0
+            service_repo: https://github.com/elixir-europe/proWES

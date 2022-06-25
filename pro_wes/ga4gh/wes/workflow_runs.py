@@ -61,7 +61,7 @@ class WorkflowRuns:
                 this is iteratively built up.
         """
         self.config: Dict = current_app.config
-        self.foca_config: Config = current_app.config['FOCA']
+        self.foca_config: Config = current_app.config.foca
         self.db_client: Collection = (
             self.foca_config.db.dbs['runStore'].collections['runs'].client
         )
@@ -80,7 +80,7 @@ class WorkflowRuns:
             Workflow run identifier.
         """
         document: DbDocument = DbDocument()
-        controller_config = self.foca_config.controllers['post_runs']
+        controller_config = self.foca_config.custom.post_runs
 
         # validate and attach request
         document.run_log.request = self._validate_run_request(
@@ -127,7 +127,7 @@ class WorkflowRuns:
         try:
             response = wes_client.post_run(
                 form_data=document.run_log.request.dict(),
-                timeout=controller_config['timeout']['post'],
+                timeout=controller_config.timeout_post,
             )
         except EngineUnavailable:
             db_connector.update_task_state(state=State.SYSTEM_ERROR.value)
@@ -156,7 +156,7 @@ class WorkflowRuns:
             remote_base_path=document_stored.wes_endpoint.base_path,
             remote_run_id=document_stored.wes_endpoint.run_id,
             jwt=kwargs.get('jwt', None),
-            timeout=controller_config['timeout']['job'],
+            timeout=controller_config.timeout_job,
         )
 
         return {'run_id': document_stored.run_log.run_id}
@@ -180,7 +180,7 @@ class WorkflowRuns:
             page_size = kwargs['page_size']
         else:
             page_size = (
-                self.foca_config.controllers['list_runs']['default_page_size']
+                self.foca_config.custom.list_runs.default_page_size
             )
 
         # extract/set page token
@@ -407,16 +407,18 @@ class WorkflowRuns:
             pro_wes.exceptions.IdsUnavailableProblem: Raised if no unique run
                 identifier could be found.
         """
-        controller_config = self.foca_config.controllers['post_runs']
+        controller_config = self.foca_config.custom.post_runs
         # try until unused run id was found
         attempt = 1
-        while attempt <= controller_config['db']['insert_attempts']:
+        while attempt <= controller_config.db_insert_attempts:
             attempt += 1
             run_id = generate_id(
-                charset=controller_config['run_id']['charset'],
-                length=controller_config['run_id']['length'],
+                charset=controller_config.id_charset,
+                length=controller_config.id_length,
             )
-            work_dir = Path(controller_config['storage']).resolve() / run_id
+            work_dir = Path(
+                controller_config.storage_path
+            ).resolve() / run_id
 
             # try to create working directory
             try:

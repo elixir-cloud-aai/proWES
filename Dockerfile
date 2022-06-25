@@ -1,8 +1,8 @@
 ##### BASE IMAGE #####
-FROM elixircloud/foca:20220524-py3.7
+FROM elixircloud/foca:20220625-py3.10
 
 ##### METADATA #####
-LABEL base.image="elixircloud/foca:20220524-py3.7"
+LABEL base.image="elixircloud/foca:20220625-py3.10"
 LABEL version="2.0"
 LABEL software="proWES"
 LABEL software.version="0.15.0"

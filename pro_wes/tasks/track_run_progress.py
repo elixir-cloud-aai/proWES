@@ -15,7 +15,8 @@ from pro_wes.exceptions import (
     EngineProblem,
     EngineUnavailable,
 )
-from pro_wes.ga4gh.wes.models import (
+from pro_wes.ga4gh.wes.models import (  # noqa: F401
+    DbDocument,
     RunLog,
     RunStatus,
     State,
@@ -61,8 +62,8 @@ def task__track_run_progress(
         pro_wes.exceptions.EngineUnavailable: The remote service is unavailable
             or is not a valid WES service.
     """
-    foca_config: Config = current_app.config['FOCA']
-    controller_config: Dict = foca_config.controllers['post_runs']
+    foca_config: Config = current_app.config.foca
+    controller_config: Dict = foca_config.custom.post_runs
 
     logger.info(f"[{self.request.id}] Start processing...")
 
@@ -100,7 +101,7 @@ def task__track_run_progress(
 #        db_client.update_task_state(state=State.SYSTEM_ERROR.value)
 #        raise EngineProblem("Did not receive expected response.")
     response.pop("request", None)
-    document = db_client.upsert_fields_in_root_object(
+    document: DbDocument = db_client.upsert_fields_in_root_object(
         root='run_log',
         **response,
     )
@@ -109,14 +110,14 @@ def task__track_run_progress(
     run_state: State = State.UNKNOWN
     attempt: int = 1
     while not run_state.is_finished:
-        sleep(controller_config['polling']['wait'])
+        sleep(controller_config.polling_wait)
         try:
             response = wes_client.get_run_status(
                 run_id=document.wes_endpoint.run_id,
-                timeout=controller_config['timeout']['poll'],
+                timeout=foca_config.custom.defaults.timeout,
             )
         except EngineUnavailable as exc:
-            if attempt <= controller_config['polling']['attempts']:
+            if attempt <= controller_config.polling_attempts:
                 attempt += 1
                 logger.warning(exc, exc_info=True)
                 continue
@@ -124,7 +125,7 @@ def task__track_run_progress(
                 db_client.update_task_state(state=State.SYSTEM_ERROR.value)
                 raise
         if not isinstance(response, RunStatus):
-            if attempt <= controller_config['polling']['attempts']:
+            if attempt <= controller_config.polling_attempts:
                 attempt += 1
                 logger.warning(f"Received error response: {response}")
                 continue

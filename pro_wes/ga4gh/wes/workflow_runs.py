@@ -150,13 +150,16 @@ class WorkflowRuns:
         )
 
         # track workflow progress in background
-        self._track_run_progress(
+        task__track_run_progress.apply_async(
+            None,
+            {
+                'jwt': kwargs.get('jwt', None),
+                'remote_host': document_stored.wes_endpoint.host,
+                'remote_base_path': document_stored.wes_endpoint.base_path,
+                'remote_run_id': document_stored.wes_endpoint.run_id,
+            },
             task_id=document_stored.task_id,
-            remote_host=document_stored.wes_endpoint.host,
-            remote_base_path=document_stored.wes_endpoint.base_path,
-            remote_run_id=document_stored.wes_endpoint.run_id,
-            jwt=kwargs.get('jwt', None),
-            timeout=controller_config.timeout_job,
+            soft_time_limit=controller_config.timeout_job,
         )
 
         return {'run_id': document_stored.run_log.run_id}
@@ -476,44 +479,6 @@ class WorkflowRuns:
             )
         logger.warning(f"ATTACHMENTS: {attachments}")
         return attachments
-
-    def _track_run_progress(
-        self,
-        task_id: str,
-        remote_host: str,
-        remote_base_path: str,
-        remote_run_id: str,
-        jwt: Optional[str] = None,
-        timeout: Optional[int] = None,
-    ) -> None:
-        """Asynchronously track the workflow run request on the remote WES.
-
-        Args:
-            task_id: Identifier for the background job.
-            remote_host: Host at which the WES API is served that is processing
-                this request; note that this should include the path
-                information but *not* the base path path defined in the WES API
-                specification; e.g., specify https://my.wes.com/api if the
-                actual API is hosted at https://my.wes.com/api/ga4gh/wes/v1.
-            remote_base_path: Override the default path suffix defined in the
-                WES API specification, i.e., `/ga4gh/wes/v1`.
-            remote_run_id: Workflow run identifier on remote WES service.
-            jwt: Authorization bearer token to be passed on with workflow run
-                request to external engine.
-            timeout: Timeout for the job. Set to `None` to disable timeout.
-        """
-        task__track_run_progress.apply_async(
-            None,
-            {
-                'jwt': jwt,
-                'remote_host': remote_host,
-                'remote_base_path': remote_base_path,
-                'remote_run_id': remote_run_id
-            },
-            task_id=task_id,
-            soft_time_limit=timeout,
-        )
-        return None
 
     @staticmethod
     def _validate_run_request(

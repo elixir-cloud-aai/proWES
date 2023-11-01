@@ -22,7 +22,7 @@ def init_app() -> App:
             service_info = service_info.get_service_info()
         except NotFound:
             service_info.set_service_info(
-                data=current_app.config.foca.custom['service_info']
+                data=current_app.config.foca.custom.service_info.dict()
             )
     return app
 

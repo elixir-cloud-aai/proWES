@@ -19,7 +19,7 @@ from pro_wes.ga4gh.wes.models import (
 )
 
 
-class WesClient():
+class WesClient:
     """Client to communicate with GA4GH WES API.
 
     Arguments:
@@ -39,6 +39,7 @@ class WesClient():
         token: Bearer token for gaining access to WES endpoints.
         session: Client server session.
     """
+
     def __init__(
         self,
         host: str,
@@ -123,9 +124,7 @@ class WesClient():
         try:
             RunRequest(**form_data)
         except Exception as exc:
-            raise ValueError(
-                f"invalid form data: {form_data}"
-            ) from exc
+            raise ValueError(f"invalid form data: {form_data}") from exc
         try:
             response_unvalidated = self.session.post(
                 url,
@@ -320,7 +319,7 @@ class WesClient():
 
     def set_headers(
         self,
-        content_accept: str = 'application/json',
+        content_accept: str = "application/json",
         content_type: Optional[str] = None,
     ) -> None:
         """Set session headers.
@@ -330,8 +329,8 @@ class WesClient():
             content_type: Type of content sent with the request.
         """
         headers = {}
-        headers['Accept'] = content_accept
+        headers["Accept"] = content_accept
         if content_type is not None:
-            headers['Content-Type'] = content_type
-        headers['Authorization'] = f"Bearer {self.token}"
+            headers["Content-Type"] = content_type
+        headers["Authorization"] = f"Bearer {self.token}"
         self.session.headers.update(headers)

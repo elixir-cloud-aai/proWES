@@ -9,7 +9,7 @@ from typing import (
 
 from foca.database.register_mongodb import _create_mongo_client
 from foca.models.config import Config
-from flask import (Flask, current_app)
+from flask import Flask, current_app
 
 from pro_wes.exceptions import (
     EngineProblem,
@@ -23,13 +23,13 @@ from pro_wes.ga4gh.wes.models import (  # noqa: F401
 )
 from pro_wes.utils.db import DbDocumentConnector
 from pro_wes.client_wes import WesClient
-from pro_wes.worker import celery
+from pro_wes.celery_worker import celery
 
 logger = logging.getLogger(__name__)
 
 
 @celery.task(
-    name='tasks.track_run_progress',
+    name="tasks.track_run_progress",
     bind=True,
     ignore_result=True,
     track_started=True,
@@ -72,8 +72,8 @@ def task__track_run_progress(
         app=Flask(__name__),
         host=foca_config.db.host,
         port=foca_config.db.port,
-        db='runStore',
-    ).db['runs']
+        db="runStore",
+    ).db["runs"]
     db_client = DbDocumentConnector(
         collection=collection,
         task_id=self.request.id,
@@ -97,12 +97,12 @@ def task__track_run_progress(
     except EngineUnavailable:
         db_client.update_task_state(state=State.SYSTEM_ERROR.value)
         raise
-#    if not isinstance(response, RunLog):
-#        db_client.update_task_state(state=State.SYSTEM_ERROR.value)
-#        raise EngineProblem("Did not receive expected response.")
+    #    if not isinstance(response, RunLog):
+    #        db_client.update_task_state(state=State.SYSTEM_ERROR.value)
+    #        raise EngineProblem("Did not receive expected response.")
     response.pop("request", None)
     document: DbDocument = db_client.upsert_fields_in_root_object(
-        root='run_log',
+        root="run_log",
         **response,
     )
 
@@ -145,12 +145,12 @@ def task__track_run_progress(
     except EngineUnavailable:
         db_client.update_task_state(state=State.SYSTEM_ERROR.value)
         raise
-#    if not isinstance(response, RunLog):
-#        db_client.update_task_state(state=State.SYSTEM_ERROR.value)
-#        raise EngineProblem("Did not receive expected response.")
+    #    if not isinstance(response, RunLog):
+    #        db_client.update_task_state(state=State.SYSTEM_ERROR.value)
+    #        raise EngineProblem("Did not receive expected response.")
     response.pop("request", None)
     document = db_client.upsert_fields_in_root_object(
-        root='run_log',
+        root="run_log",
         **response,
     )
 

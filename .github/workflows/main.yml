@@ -1,43 +1,86 @@
----
-name: Test with docker compose
+name: proWES checks
+
 on:
   push:
     branches: [ dev ]
   pull_request:
     branches: [ dev ]
 
+
 jobs:
-  build:
+  lint:
+    name: Run linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install requirements
+        run: |
+          pip install -r requirements_dev.txt
+          pip install .
+      - name: Lint with Flake8
+        run: flake8
+  test:
+    name: Run tests
     runs-on: ubuntu-latest
     env:
-      PROBE_ENDPOINT: localhost:8080/ga4gh/wes/v1/ui/
-    strategy:
-      fail-fast: true
-      matrix:
-        python-version: ["3.7", "3.8","3.9", "3.10"]
-
+      PROBE_ENDPOINT: localhost:8090/ga4gh/wes/v1/service-info
+    permissions:
+      contents: read
+      packages: write
     steps:
-    - uses: actions/checkout@v2
-    - name: Install dependencies
-      run: pip install docker-compose
-    - name: Create data directories
-      run: mkdir -p ${HOME}/data/{db,output,tmp}
-    - name: Docker compose up
-      run: docker-compose up -d
-    - name: Sleep 30
-      run: sleep 30
-    - name: PROBE
-      run: echo "${PROBE_ENDPOINT}"
-    - name: Test
-      run: |
-        test $( \
-          curl \
-           -sL \
-           -v \
-           -o /dev/null \
-           -w '%{http_code}' \
-           -X GET \
-           --header 'Accept: application/json' \
-           "${PROBE_ENDPOINT}" \
-          ) == '200' || exit 1
-
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Deploy app
+        run: docker-compose up -d --build
+      - name: Wait for app startup
+        run: sleep 20
+      - name: Probe endpoint
+        run: |
+          test $( \
+            curl \
+             -sL \
+             -v \
+             -o /dev/null \
+             -w '%{http_code}' \
+             -X GET \
+             --header 'Accept: application/json' \
+             "${PROBE_ENDPOINT}" \
+            ) == '200' || exit 1
+  publish:
+    name: Build and publish app image
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    needs: [lint, test]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Generate tag
+        run: |
+          echo "TAG=$(date '+%Y%m%d')" >> $GITHUB_ENV
+      - name: Build and publish image
+        id: docker
+        uses: philips-software/docker-ci-scripts@v5.0.0
+        with:
+          dockerfile: .
+          image-name: "prowes"
+          tags: "latest ${{ env.TAG }}"
+          push-branches: "${{ github.event.repository.default_branch }}"
+        env:
+          REGISTRY_USERNAME: ${{ secrets.DOCKERHUB_LOGIN }}
+          REGISTRY_TOKEN: "${{ secrets.DOCKERHUB_TOKEN }}"
+          DOCKER_ORGANIZATION: ${{ secrets.DOCKERHUB_ORG }}
+          GITHUB_ORGANIZATION: ${{ github.repository_owner }}
+      - name: Verify that image was pushed
+        run: |
+          echo "Push indicator: ${{ steps.docker.outputs.push-indicator }}"
+          echo "# Set to 'true' if image was pushed, empty string otherwise"
+          test "${{ steps.docker.outputs.push-indicator }}" == "true"

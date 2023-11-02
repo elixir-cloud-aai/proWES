@@ -23,7 +23,7 @@ jobs:
           pip install .
           pip install -r requirements_dev.txt
       - name: Lint with Flake8
-        run: flake8 pro_tes/ setup.py
+        run: flake8
   test:
     name: Run tests
     runs-on: ubuntu-latest

@@ -4,12 +4,12 @@
 
 applicationDomain: rahtiapp.fi
 
-# which cluster type the service is going to be deployed on
-# either 'kubernetes' or 'openshift'
+# which cluster type proWES is going to be deployed on
+# it can be either 'kubernetes' or 'openshift'
 clusterType: openshift
 
 flower:
-  appName: flower
+  appName: prowes-flower
   basicAuth: admin:admin
   image: endocode/flower
 

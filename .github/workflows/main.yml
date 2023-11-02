@@ -28,7 +28,7 @@ jobs:
     name: Run tests
     runs-on: ubuntu-latest
     env:
-      PROBE_ENDPOINT: localhost:8090/ga4gh/wes/v1/service-info
+      PROBE_ENDPOINT: localhost:8080/ga4gh/wes/v1/service-info
     permissions:
       contents: read
       packages: write

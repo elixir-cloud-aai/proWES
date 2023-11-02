@@ -43,6 +43,7 @@ jobs:
         run: docker compose up -d --build
       - name: Wait for app startup
         run: sleep 20
+      - run: docker ps
       - name: Probe endpoint
         run: |
           test $( \

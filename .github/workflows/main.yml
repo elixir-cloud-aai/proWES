@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      PROBE_ENDPOINT: localhost:8090/ga4gh/wes/v1/ui/
+      PROBE_ENDPOINT: 0.0.0.0:8090/ga4gh/wes/v1/service-info
     strategy:
       fail-fast: true
       matrix:

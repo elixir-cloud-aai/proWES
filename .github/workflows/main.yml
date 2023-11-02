@@ -17,12 +17,10 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: "3.10"
-    - name: Install dependencies
-      run: pip install docker-compose
     - name: Create data directories
       run: mkdir -p ${HOME}/data/{db,output,tmp}
     - name: Docker compose up
-      run: docker-compose up -d
+      run: docker compose up -d
     - name: Sleep 30
       run: sleep 30
     - name: PROBE

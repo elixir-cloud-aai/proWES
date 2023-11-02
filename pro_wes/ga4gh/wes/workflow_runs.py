@@ -49,7 +49,6 @@ logger = logging.getLogger(__name__)
 
 
 class WorkflowRuns:
-
     def __init__(self) -> None:
         """Class for WES API server-side controller methods.
 
@@ -63,7 +62,7 @@ class WorkflowRuns:
         self.config: Dict = current_app.config
         self.foca_config: Config = current_app.config.foca
         self.db_client: Collection = (
-            self.foca_config.db.dbs['runStore'].collections['runs'].client
+            self.foca_config.db.dbs["runStore"].collections["runs"].client
         )
 
     # controller method for `POST /runs`
@@ -93,7 +92,7 @@ class WorkflowRuns:
         )
 
         # get and attach workflow run owner
-        document.user_id = kwargs.get('user_id', None)
+        document.user_id = kwargs.get("user_id", None)
 
         # create run environment & insert run document into run collection
         document_stored = self._create_run_environment(document=document)
@@ -105,7 +104,7 @@ class WorkflowRuns:
         wes_client: WesClient = WesClient(
             host=document_stored.wes_endpoint.host,
             base_path=document_stored.wes_endpoint.base_path,
-            token=kwargs.get('jwt', None),
+            token=kwargs.get("jwt", None),
         )
 
         # instantiate database connector
@@ -144,7 +143,7 @@ class WorkflowRuns:
                 raise InternalServerError
         document_stored: DbDocument = (
             db_connector.upsert_fields_in_root_object(
-                root='wes_endpoint',
+                root="wes_endpoint",
                 run_id=response.run_id,
             )
         )
@@ -153,16 +152,16 @@ class WorkflowRuns:
         task__track_run_progress.apply_async(
             None,
             {
-                'jwt': kwargs.get('jwt', None),
-                'remote_host': document_stored.wes_endpoint.host,
-                'remote_base_path': document_stored.wes_endpoint.base_path,
-                'remote_run_id': document_stored.wes_endpoint.run_id,
+                "jwt": kwargs.get("jwt", None),
+                "remote_host": document_stored.wes_endpoint.host,
+                "remote_base_path": document_stored.wes_endpoint.base_path,
+                "remote_run_id": document_stored.wes_endpoint.run_id,
             },
             task_id=document_stored.task_id,
             soft_time_limit=controller_config.timeout_job,
         )
 
-        return {'run_id': document_stored.run_log.run_id}
+        return {"run_id": document_stored.run_log.run_id}
 
     # controller method for `GET /runs`
     def list_runs(
@@ -179,66 +178,64 @@ class WorkflowRuns:
                 https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L495-L510
         """
         # fall back to default page size if not provided by user
-        if 'page_size' in kwargs:
-            page_size = kwargs['page_size']
+        if "page_size" in kwargs:
+            page_size = kwargs["page_size"]
         else:
-            page_size = (
-                self.foca_config.custom.list_runs.default_page_size
-            )
+            page_size = self.foca_config.custom.list_runs.default_page_size
 
         # extract/set page token
-        if 'page_token' in kwargs:
-            page_token = kwargs['page_token']
+        if "page_token" in kwargs:
+            page_token = kwargs["page_token"]
         else:
-            page_token = ''
+            page_token = ""
 
         # initialize filter dictionary
         filter_dict = {}
 
         # add filter for user-owned runs if user ID is available
-        if 'user_id' in kwargs:
-            filter_dict['user_id'] = kwargs['user_id']
+        if "user_id" in kwargs:
+            filter_dict["user_id"] = kwargs["user_id"]
 
         # add pagination filter based on last object ID
-        if page_token != '':
-            filter_dict['_id'] = {'$lt': ObjectId(page_token)}
+        if page_token != "":
+            filter_dict["_id"] = {"$lt": ObjectId(page_token)}
 
         # query database for workflow runs
-        cursor = self.db_client.find(
-            filter=filter_dict,
-            projection={
-                'run_log.run_id': True,
-                'run_log.state': True,
-            }
-            # sort results by descending object ID (+/- newest to oldest)
-            ).sort(
-                '_id', -1
-            # implement page size limit
-            ).limit(
-                page_size
+        cursor = (
+            self.db_client.find(
+                filter=filter_dict,
+                projection={
+                    "run_log.run_id": True,
+                    "run_log.state": True,
+                }
+                # sort results by descending object ID (+/- newest to oldest)
             )
+            .sort(
+                "_id",
+                -1
+                # implement page size limit
+            )
+            .limit(page_size)
+        )
 
         # convert cursor to list
         runs_list = list(cursor)
 
         # get next page token from ID of last run in cursor
         if runs_list:
-            next_page_token = str(runs_list[-1]['_id'])
+            next_page_token = str(runs_list[-1]["_id"])
         else:
-            next_page_token = ''
+            next_page_token = ""
 
         # reshape list of runs
         for run in runs_list:
-            run['run_id'] = run['run_log']['run_id']
-            run['state'] = run['run_log']['state']
-            del run['run_log']
-            del run['_id']
+            run["run_id"] = run["run_log"]["run_id"]
+            run["state"] = run["run_log"]["state"]
+            del run["run_log"]
+            del run["_id"]
 
         # build and return response
-        return {
-            'next_page_token': next_page_token,
-            'runs': runs_list
-        }
+        return {"next_page_token": next_page_token, "runs": runs_list}
 
     # controller method for `GET /runs/{run_id}`
     def get_run_log(
@@ -264,12 +261,12 @@ class WorkflowRuns:
         """
         # retrieve workflow run
         document = self.db_client.find_one(
-            filter={'run_log.run_id': run_id},
+            filter={"run_log.run_id": run_id},
             projection={
-                'user_id': True,
-                'run_log': True,
-                '_id': False,
-            }
+                "user_id": True,
+                "run_log": True,
+                "_id": False,
+            },
         )
 
         # raise error if workflow run was not found
@@ -281,11 +278,11 @@ class WorkflowRuns:
         # only if authorization enabled
         self._check_access_permission(
             resource_id=run_id,
-            owner=document.get('user_id', None),
-            requester=kwargs.get('user_id', None),
+            owner=document.get("user_id", None),
+            requester=kwargs.get("user_id", None),
         )
 
-        return document['run_log']
+        return document["run_log"]
 
     # controller method for `GET /runs/{run_id}/status`
     def get_run_status(
@@ -311,12 +308,12 @@ class WorkflowRuns:
         """
         # retrieve workflow run
         document = self.db_client.find_one(
-            filter={'run_log.run_id': run_id},
+            filter={"run_log.run_id": run_id},
             projection={
-                'user_id': True,
-                'run_log.state': True,
-                '_id': False,
-            }
+                "user_id": True,
+                "run_log.state": True,
+                "_id": False,
+            },
         )
 
         # ensure resource is available
@@ -327,13 +324,13 @@ class WorkflowRuns:
         # ensure requester has access
         self._check_access_permission(
             resource_id=run_id,
-            owner=document.get('user_id', None),
-            requester=kwargs.get('user_id', None),
+            owner=document.get("user_id", None),
+            requester=kwargs.get("user_id", None),
         )
 
         return {
-            'run_id': run_id,
-            'state': document['run_log']['state'],
+            "run_id": run_id,
+            "state": document["run_log"]["state"],
         }
 
     # controller method for `POST /runs/{run_id}/cancel`
@@ -359,14 +356,14 @@ class WorkflowRuns:
         """
         # retrieve workflow run
         document = self.db_client.find_one(
-            filter={'run_log.run_id': run_id},
+            filter={"run_log.run_id": run_id},
             projection={
-                'user_id': True,
-                'wes_endpoint.host': True,
-                'wes_endpoint.base_path': True,
-                'wes_endpoint.run_id': True,
-                '_id': False,
-            }
+                "user_id": True,
+                "wes_endpoint.host": True,
+                "wes_endpoint.base_path": True,
+                "wes_endpoint.run_id": True,
+                "_id": False,
+            },
         )
 
         # ensure resource is available
@@ -377,19 +374,19 @@ class WorkflowRuns:
         # ensure requester has access
         self._check_access_permission(
             resource_id=run_id,
-            owner=document.get('user_id', None),
-            requester=kwargs.get('user_id', None),
+            owner=document.get("user_id", None),
+            requester=kwargs.get("user_id", None),
         )
 
         # cancel workflow run
         wes_client: WesClient = WesClient(
-            host=document['wes_endpoint']['host'],
-            base_path=document['wes_endpoint']['base_path'],
-            token=kwargs.get('jwt', None),
+            host=document["wes_endpoint"]["host"],
+            base_path=document["wes_endpoint"]["base_path"],
+            token=kwargs.get("jwt", None),
         )
-        wes_client.cancel_run(run_id=document['wes_endpoint']['run_id'])
+        wes_client.cancel_run(run_id=document["wes_endpoint"]["run_id"])
 
-        return {'run_id': run_id}
+        return {"run_id": run_id}
 
     def _create_run_environment(
         self,
@@ -419,9 +416,7 @@ class WorkflowRuns:
                 charset=controller_config.id_charset,
                 length=controller_config.id_length,
             )
-            work_dir = Path(
-                controller_config.storage_path
-            ).resolve() / run_id
+            work_dir = Path(controller_config.storage_path).resolve() / run_id
 
             # try to create working directory
             try:
@@ -464,20 +459,20 @@ class WorkflowRuns:
             List of `Attachment` model instances.
         """
         attachments = []
-        logger.warning(request.files)
         files = request.files.getlist("workflow_attachment")
-        logger.warning(f"FILES: {files}")
         for file in files:
             attachments.append(
                 Attachment(
                     filename=file.filename,
                     object=file.stream,
-                    path=str(work_dir / self._secure_filename(
-                        name=Path(file.filename),
-                    ))
+                    path=str(
+                        work_dir
+                        / self._secure_filename(
+                            name=Path(file.filename),
+                        )
+                    ),
                 )
             )
-        logger.warning(f"ATTACHMENTS: {attachments}")
         return attachments
 
     @staticmethod
@@ -493,8 +488,7 @@ class WorkflowRuns:
         dict_of_lists = form_data.to_dict(flat=False)
         # flatten single item lists
         dict_atomic = {
-            k: v[0] if len(v) == 1 else v for
-            k, v in dict_of_lists.items()
+            k: v[0] if len(v) == 1 else v for k, v in dict_of_lists.items()
         }
         # remove 'workflow_attachment' field
         dict_atomic.pop("workflow_attachment", None)
@@ -524,7 +518,6 @@ class WorkflowRuns:
             attachments: List of `Attachment` model instances.
         """
         files = request.files.getlist("workflow_attachment")
-        logger.warning(files)
         for attachment in attachments:
             with open(attachment.path, "wb") as dest:
                 for file in files:

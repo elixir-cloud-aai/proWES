@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 class DbDocumentConnector:
-
     def __init__(
         self,
         collection: Collection,
@@ -36,7 +35,7 @@ class DbDocumentConnector:
 
     def get_document(
         self,
-        projection: Mapping = {'_id': False},
+        projection: Mapping = {"_id": False},
     ) -> DbDocument:
         """Get document associated with task.
 
@@ -53,7 +52,7 @@ class DbDocumentConnector:
             ValueError: Returned document does not conform to schema.
         """
         document_unvalidated = self.collection.find_one(
-            filter={'task_id': self.task_id},
+            filter={"task_id": self.task_id},
             projection=projection,
         )
         try:
@@ -67,7 +66,7 @@ class DbDocumentConnector:
 
     def update_task_state(
         self,
-        state: str = 'UNKNOWN',
+        state: str = "UNKNOWN",
     ) -> None:
         """Update task status.
 
@@ -80,12 +79,10 @@ class DbDocumentConnector:
         try:
             State(state)
         except Exception as exc:
-            raise ValueError(
-                f"Unknown state: {state}"
-            ) from exc
+            raise ValueError(f"Unknown state: {state}") from exc
         self.collection.find_one_and_update(
-            {'task_id': self.task_id},
-            {'$set': {'run_log.state': state}},
+            {"task_id": self.task_id},
+            {"$set": {"run_log.state": state}},
         )
         logger.info(f"[{self.task_id}] {state}")
         return None
@@ -99,12 +96,14 @@ class DbDocumentConnector:
         document.
         """
         document_unvalidated = self.collection.find_one_and_update(
-            {'task_id': self.task_id},
-            {'$set': {
-                '.'.join([root, key]):
-                    value for (key, value) in kwargs.items()
-            }},
-            return_document=ReturnDocument.AFTER
+            {"task_id": self.task_id},
+            {
+                "$set": {
+                    ".".join([root, key]): value
+                    for (key, value) in kwargs.items()
+                }
+            },
+            return_document=ReturnDocument.AFTER,
         )
         try:
             document: DbDocument = DbDocument(**document_unvalidated)

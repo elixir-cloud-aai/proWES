@@ -10,7 +10,7 @@ services:
     links:
       - mongodb
       - rabbitmq
-    command: bash -c "cd /app/pro_wes; celery -A worker worker -E --loglevel=info"
+    command: bash -c "cd /app/pro_wes; celery -A celery_worker worker -E --loglevel=info"
     volumes:
       - ${PROWES_DATA_DIR:-../data/pro_wes}:/data
 
@@ -53,4 +53,3 @@ services:
     command: flower --broker=amqp://guest:guest@rabbitmq:5672// --port=5555
     ports:
       - "5565:5555"
-

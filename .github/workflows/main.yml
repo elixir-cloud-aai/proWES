@@ -45,7 +45,7 @@ jobs:
         run: sleep 20
       - run: docker ps
       - run: docker logs $(docker ps | grep prowes_1 | cut -f1 -d" ")
-      - run: docker logs $(docker ps | grep prowes_worker-1 | cut -f1 -d" ")
+      - run: docker logs $(docker ps | grep prowes-worker_1 | cut -f1 -d" ")
       - name: Probe endpoint
         run: |
           test $( \

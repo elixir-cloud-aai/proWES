@@ -16,8 +16,6 @@ ENV LOGNAME=ipython
 ENV USER=ipython
 
 WORKDIR /app
-COPY ./requirements.txt /app/requirements.txt
-RUN pip install -r requirements.txt
 COPY ./ .
 RUN pip install -e .
 

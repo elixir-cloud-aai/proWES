@@ -12,6 +12,7 @@ from pydantic import (  # pylint: disable=no-name-in-module
 )
 
 from pro_wes.exceptions import NoSuitableEngine
+from pro_wes.ga4gh.service_info.models import Service
 from pro_wes.ga4gh.wes.service_info import ServiceInfo as ServiceInfoController
 
 # pragma pylint: disable=too-few-public-methods
@@ -455,8 +456,8 @@ class DefaultWorkflowEngineParameter(BaseModel):
     default_value: Optional[str]
 
 
-class ServiceInfoBase(BaseModel):
-    """Base model for service info.
+class ServiceInfoWesBase(BaseModel):
+    """Base model for WES-specific service info fields.
 
     Args:
         workflow_type_versions: Workflow types and versions supported by this
@@ -496,6 +497,10 @@ class ServiceInfoBase(BaseModel):
     default_workflow_engine_parameters: List[DefaultWorkflowEngineParameter] = []
     auth_instructions_url: str
     tags: Dict[str, str]
+
+
+class ServiceInfoBase(ServiceInfoWesBase, Service):
+    """Based model for service info."""
 
 
 class ServiceInfo(ServiceInfoBase):

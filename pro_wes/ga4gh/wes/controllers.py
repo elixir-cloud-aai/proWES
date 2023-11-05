@@ -42,6 +42,7 @@ def PostServiceInfo(**kwargs) -> Tuple[None, Literal["201"]]:
     """
     service_info = ServiceInfo()
     service_info.set_service_info(data=request.json)
+    logger.warning("BEFORE RETURNING")
     return (None, "201")
 
 

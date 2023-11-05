@@ -1,15 +1,11 @@
 """Custom app config models."""
 
-from typing import Dict, List, Optional
+from typing import Optional
 from pathlib import Path
 
-from pydantic import AnyUrl, BaseModel  # pylint: disable=no-name-in-module
+from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
-from pro_wes.ga4gh.wes.models import (
-    DefaultWorkflowEngineParameter,
-    ServiceInfoBase,
-    WorkflowTypeVersion,
-)
+from pro_wes.ga4gh.wes.models import ServiceInfoBase as ServiceInfo
 
 # pragma pylint: disable=too-few-public-methods
 
@@ -72,55 +68,6 @@ class ListRuns(BaseModel):
     default_page_size: int = 5
 
 
-class ServiceInfo(ServiceInfoBase):
-    """Model for initial service info configuration.
-
-    Args:
-        workflow_type_versions: Workflow types and versions supported by this
-            service.
-        supported_wes_versions: The version(s) of the WES schema supported by
-            this service.
-        supported_filesystem_protocols: The filesystem protocols supported by
-            this service.
-        workflow_engine_versions: Workflow engine versions supported by this
-            service.
-        default_workflow_engine_parameters: Default workflow engine parameters
-            set by this service.
-        auth_instructions_url: URL to web page with human-readable instructions
-            on how to get an authorization token for use with this service.
-        tags: Additional information about this service as key-value pairs.
-
-    Attributes:
-        workflow_type_versions: Workflow types and versions supported by this
-            service.
-        supported_wes_versions: The version(s) of the WES schema supported by
-            this service.
-        supported_filesystem_protocols: The filesystem protocols supported by
-            this service.
-        workflow_engine_versions: Workflow engine versions supported by this
-            service.
-        default_workflow_engine_parameters: Default workflow engine parameters
-            set by this service.
-        auth_instructions_url: URL to web page with human-readable instructions
-            on how to get an authorization token for use with this service.
-        tags: Additional information about this service as key-value pairs.
-    """
-
-    workflow_type_versions: Dict[str, WorkflowTypeVersion] = {
-        "CWL": WorkflowTypeVersion(workflow_type_version=["v1.0"]),
-    }
-    supported_wes_versions: List[str] = [
-        "1.0.0",
-    ]
-    supported_filesystem_protocols: List[str] = [
-        "http",
-    ]
-    workflow_engine_versions: Dict[str, str] = {}
-    default_workflow_engine_parameters: List[DefaultWorkflowEngineParameter] = []
-    auth_instructions_url: AnyUrl = "https://lifescience-ri.eu/ls-login/"
-    tags: Dict[str, str] = {"service_repo": "https://github.com/elixir-europe/proWES"}
-
-
 class CustomConfig(BaseModel):
     """Custom app configuration.
 
@@ -142,4 +89,4 @@ class CustomConfig(BaseModel):
     defaults: Defaults = Defaults()
     post_runs: PostRuns = PostRuns()
     list_runs: ListRuns = ListRuns()
-    service_info: ServiceInfo = ServiceInfo()
+    service_info: ServiceInfo

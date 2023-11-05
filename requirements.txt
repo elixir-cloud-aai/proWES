@@ -1,2 +1,4 @@
+connexion<3
+email-validator>=2.1.0,<3
 foca>=0.12.1
 gunicorn>=20.1.0,<21

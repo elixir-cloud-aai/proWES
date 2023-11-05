@@ -122,14 +122,33 @@ custom:
   list_runs:
     default_page_size: 5
   service_info:
-    auth_instructions_url: "https://www.elixir-europe.org/services/compute/aai"
+    auth_instructions_url: "https://example.org/auth_instructions"
+    default_workflow_engine_parameters: []
+    id: v1.wes.ga4gh.org.example
+    name: "proWES example deployment"
     supported_filesystem_protocols:
-      - http
+      - https
     supported_wes_versions:
-      - 1.0.0
+      - 1.0.1
+    tags:
+      key: "value"
+    type:
+      group: "org.ga4gh"
+      artifact: "wes"
+      version: "1.0.1"
+    workflow_engine_versions:
+      cwl-engine: "1.2.3"
     workflow_type_versions:
       CWL:
         workflow_type_version:
           - v1.0
-    tags:
-      service_repo: https://github.com/elixir-europe/proWES
+    description: "WES gateway service"
+    organization:
+      name: "Example organization"
+      url: "https://example.org"
+    contactUrl: "support@example.org"
+    documentationUrl: "https://example.org/docs"
+    createdAt: "2020-01-01T00:00:00Z"
+    updatedAt: "2022-12-31T00:00:00Z"
+    environment: "test"
+    version: "0.18.0"

@@ -6,129 +6,130 @@
 # Server configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.ServerConfig
 server:
-    host: '0.0.0.0'
-    port: 8080
-    debug: True
-    environment: development
-    testing: False
-    use_reloader: False
+  host: "0.0.0.0"
+  port: 8080
+  debug: True
+  environment: development
+  testing: False
+  use_reloader: False
 
 # Security configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.SecurityConfig
 security:
-    auth:
-        add_key_to_claims: True
-        algorithms:
-          - RS256
-        allow_expired: False
-        audience: null
-        validation_methods:
-          - userinfo
-          - public_key
-        validation_checks: any
+  auth:
+    add_key_to_claims: True
+    algorithms:
+      - RS256
+    allow_expired: False
+    audience: null
+    validation_methods:
+      - userinfo
+      - public_key
+    validation_checks: any
 
 # Database configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.DBConfig
 db:
-    host: mongodb
-    port: 27017
-    dbs:
-        runStore:
-            collections:
-                runs:
-                    indexes:
-                        - keys:
-                              run_id: 1
-                              task_id: 1
-                          options:
-                            'unique': True
-                            'sparse': True
-                service_info:
-                    indexes:
-                        - keys:
-                              id: 1
+  host: mongodb
+  port: 27017
+  dbs:
+    runStore:
+      collections:
+        runs:
+          indexes:
+            - keys:
+                run_id: 1
+                task_id: 1
+              options:
+                "unique": True
+                "sparse": True
+        service_info:
+          indexes:
+            - keys:
+                id: 1
 
 # API configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.APIConfig
 api:
-    specs:
-        - path:
-            - api/20200806.4048014.workflow_execution_service.openapi.yaml
-            - api/additions.openapi.yaml
-          add_operation_fields:
-              x-openapi-router-controller: pro_wes.ga4gh.wes.controllers
-          add_security_fields:
-              x-bearerInfoFunc: app.validate_token
-          disable_auth: True
-          connexion:
-              strict_validation: True
-              # workaround until cwl-WES responses are fixed
-              validate_responses: False
-              options:
-                  swagger_ui: True
-                  serve_spec: True
+  specs:
+    - path:
+        - api/20201124.tag_1_0_1.workflow_execution_service.openapi.yaml
+        - api/additions.openapi.yaml
+      add_operation_fields:
+        x-openapi-router-controller: pro_wes.ga4gh.wes.controllers
+      add_security_fields:
+        x-bearerInfoFunc: app.validate_token
+      disable_auth: True
+      connexion:
+        strict_validation: True
+        # workaround until cwl-WES responses are fixed
+        validate_responses: False
+        base_path: /ga4gh/wes/v1
+        options:
+          swagger_ui: True
+          serve_spec: True
 
 # Logging configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.LogConfig
 log:
-    version: 1
-    disable_existing_loggers: False
-    formatters:
-        standard:
-            class: logging.Formatter
-            style: "{"
-            format: "[{asctime}: {levelname:<8}] {message} [{name}]"
-    handlers:
-        console:
-            class: logging.StreamHandler
-            level: 20
-            formatter: standard
-            stream: ext://sys.stderr
-    root:
-        level: 10
-        handlers: [console]
+  version: 1
+  disable_existing_loggers: False
+  formatters:
+    standard:
+      class: logging.Formatter
+      style: "{"
+      format: "[{asctime}: {levelname:<8}] {message} [{name}]"
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: 20
+      formatter: standard
+      stream: ext://sys.stderr
+  root:
+    level: 10
+    handlers: [console]
 
 # Background job configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.JobsConfig
 jobs:
-    host: rabbitmq
-    port: 5672
-    backend: 'rpc://'
-    include:
-        - pro_wes.tasks.track_run_progress
+  host: rabbitmq
+  port: 5672
+  backend: "rpc://"
+  include:
+    - pro_wes.tasks.track_run_progress
 
 # Exception configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.ExceptionConfig
 exceptions:
-    required_members: [['message'], ['code']]
-    status_member: ['code']
-    exceptions: pro_wes.exceptions.exceptions
+  required_members: [["message"], ["code"]]
+  status_member: ["code"]
+  exceptions: pro_wes.exceptions.exceptions
 
 # Custom configuration
 # Available in app context as attributes of `current_app.config.foca`
 custom:
-    defaults:
-        timeout: 2
-    post_runs:
-        db_insert_attempts: 10
-        id_charset: string.ascii_uppercase + string.digits
-        id_length: 6
-        polling_attempts: 100
-        polling_wait: 3
-        storage_path: '/data'
-        timeout_job: null
-        timeout_post: null
-    list_runs:
-        default_page_size: 5
-    service_info:
-        auth_instructions_url: 'https://www.elixir-europe.org/services/compute/aai'
-        supported_filesystem_protocols:
-            - http
-        supported_wes_versions:
-            - 1.0.0
-        workflow_type_versions:
-            CWL:
-                workflow_type_version:
-                    - v1.0
-        tags:
-            service_repo: https://github.com/elixir-europe/proWES
+  defaults:
+    timeout: 2
+  post_runs:
+    db_insert_attempts: 10
+    id_charset: string.ascii_uppercase + string.digits
+    id_length: 6
+    polling_attempts: 100
+    polling_wait: 3
+    storage_path: "/data"
+    timeout_job: null
+    timeout_post: null
+  list_runs:
+    default_page_size: 5
+  service_info:
+    auth_instructions_url: "https://www.elixir-europe.org/services/compute/aai"
+    supported_filesystem_protocols:
+      - http
+    supported_wes_versions:
+      - 1.0.0
+    workflow_type_versions:
+      CWL:
+        workflow_type_version:
+          - v1.0
+    tags:
+      service_repo: https://github.com/elixir-europe/proWES

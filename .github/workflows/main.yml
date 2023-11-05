@@ -9,7 +9,7 @@ on:
 
 jobs:
   lint:
-    name: Run linting
+    name: Run static code analysis
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -24,6 +24,8 @@ jobs:
           pip install .
       - name: Lint with Flake8
         run: flake8
+      - name: Check code format with Black
+        run: black --check setup.py pro_wes/ tests/
   test:
     name: Run tests
     runs-on: ubuntu-latest

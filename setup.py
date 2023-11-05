@@ -15,7 +15,7 @@ with open(root_dir / "requirements.txt", encoding="utf-8") as _file:
     INSTALL_REQUIRES = _file.read().splitlines()
 
 setup(
-    name='pro-wes',
+    name="pro-wes",
     version=__version__,  # noqa: F821  # pylint: disable=undefined-variable
     license="Apache License 2.0",
     description="Proxy/gateway GA4GH WES service",
@@ -23,7 +23,7 @@ setup(
     long_description_content_type="text/markdown",
     author="ELIXIR Cloud & AAI",
     author_email="cloud-service@elixir-europe.org",
-    url='https://github.com/elixir-cloud-aai/proWES.git',
+    url="https://github.com/elixir-cloud-aai/proWES.git",
     project_urls={
         "Repository": "https://github.com/elixir-cloud-aai/proWES",
         "ELIXIR Cloud & AAI": "https://elixir-cloud.dcc.sib.swiss/",

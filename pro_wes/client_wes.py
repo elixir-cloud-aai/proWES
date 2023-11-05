@@ -69,18 +69,14 @@ class WesClient:
         try:
             response_unvalidated = self.session.get(url, **kwargs).json()
         except (RequestException, ValueError) as exc:
-            raise EngineUnavailable(
-                "external workflow engine unavailable"
-            ) from exc
+            raise EngineUnavailable("external workflow engine unavailable") from exc
         try:
             response = ServiceInfo(**response_unvalidated)
         except Exception:
             try:
                 response = ErrorResponse(**response_unvalidated)
             except Exception as exc:
-                raise ValueError(
-                    f"invalid response: {response_unvalidated}"
-                ) from exc
+                raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
     def post_run(
@@ -133,18 +129,14 @@ class WesClient:
                 **kwargs,
             ).json()
         except (RequestException, ValueError) as exc:
-            raise EngineUnavailable(
-                "external workflow engine unavailable"
-            ) from exc
+            raise EngineUnavailable("external workflow engine unavailable") from exc
         try:
             response = RunId(**response_unvalidated)
         except Exception:
             try:
                 response = ErrorResponse(**response_unvalidated)
             except Exception as exc:
-                raise ValueError(
-                    f"invalid response: {response_unvalidated}"
-                ) from exc
+                raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
     def get_runs(
@@ -171,18 +163,14 @@ class WesClient:
         try:
             response_unvalidated = self.session.get(url, **kwargs).json()
         except (RequestException, ValueError) as exc:
-            raise EngineUnavailable(
-                "external workflow engine unavailable"
-            ) from exc
+            raise EngineUnavailable("external workflow engine unavailable") from exc
         try:
             response = RunListResponse(**response_unvalidated)
         except Exception:
             try:
                 response = ErrorResponse(**response_unvalidated)
             except Exception as exc:
-                raise ValueError(
-                    f"invalid response: {response_unvalidated}"
-                ) from exc
+                raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
     def get_run(
@@ -211,9 +199,7 @@ class WesClient:
         try:
             response_unvalidated = self.session.get(url, **kwargs).json()
         except (RequestException, ValueError) as exc:
-            raise EngineUnavailable(
-                "external workflow engine unavailable"
-            ) from exc
+            raise EngineUnavailable("external workflow engine unavailable") from exc
         # skip validation; workaround for cwl-WES
         return response_unvalidated
         try:
@@ -222,9 +208,7 @@ class WesClient:
             try:
                 response = ErrorResponse(**response_unvalidated)
             except Exception as exc:
-                raise ValueError(
-                    f"invalid response: {response_unvalidated}"
-                ) from exc
+                raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
     def get_run_status(
@@ -252,18 +236,14 @@ class WesClient:
         try:
             response_unvalidated = self.session.get(url, **kwargs).json()
         except (RequestException, ValueError) as exc:
-            raise EngineUnavailable(
-                "external workflow engine unavailable"
-            ) from exc
+            raise EngineUnavailable("external workflow engine unavailable") from exc
         try:
             response = RunStatus(**response_unvalidated)
         except Exception:
             try:
                 response = ErrorResponse(**response_unvalidated)
             except Exception as exc:
-                raise ValueError(
-                    f"invalid response: {response_unvalidated}"
-                ) from exc
+                raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
     def cancel_run(
@@ -291,18 +271,14 @@ class WesClient:
         try:
             response_unvalidated = self.session.post(url, **kwargs).json()
         except (RequestException, ValueError) as exc:
-            raise EngineUnavailable(
-                "external workflow engine unavailable"
-            ) from exc
+            raise EngineUnavailable("external workflow engine unavailable") from exc
         try:
             response = RunId(**response_unvalidated)
         except Exception:
             try:
                 response = ErrorResponse(**response_unvalidated)
             except Exception as exc:
-                raise ValueError(
-                    f"invalid response: {response_unvalidated}"
-                ) from exc
+                raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
     def set_token(

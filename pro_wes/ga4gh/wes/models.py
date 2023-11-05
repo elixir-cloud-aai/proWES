@@ -45,6 +45,7 @@ class Attachment(BaseModel):
         filename: Name of the file as indicated in the run request.
         path: Path to the file on the app's storage system.
     """
+
     filename: str
     path: Path
 
@@ -84,17 +85,18 @@ class RunRequest(BaseModel):
         pro_wes.exceptions.ValidationError: The class was instantianted with an
             illegal data type.
     """
+
     workflow_params: str
     workflow_type: str
     workflow_type_version: str
-    tags: Optional[str] = '{}'
-    workflow_engine_parameters: Optional[str] = '{}'
+    tags: Optional[str] = "{}"
+    workflow_engine_parameters: Optional[str] = "{}"
     workflow_url: str
 
     @validator(
-        'workflow_type',
-        'workflow_type_version',
-        'workflow_url',
+        "workflow_type",
+        "workflow_type_version",
+        "workflow_url",
         always=True,
     )
     def required_str_field_not_empty(
@@ -113,14 +115,14 @@ class RunRequest(BaseModel):
             ValueError: The value is either missing or constitutes an empty
                 string.
         """
-        if value == '' or value is None:
+        if value == "" or value is None:
             raise ValueError("field required")
         return value
 
     @validator(
-        'workflow_params',
-        'tags',
-        'workflow_engine_parameters',
+        "workflow_params",
+        "tags",
+        "workflow_engine_parameters",
         always=True,
     )
     def json_serialized_object_field_valid(
@@ -158,10 +160,10 @@ class RunRequest(BaseModel):
             ValueError: The value could be JSON decoded, but the deserialized
                 value does not represent an object/dictionary.
         """
-        if value == '' or value == 'null' or value is None:
-            if field.name == 'workflow_params':
+        if value == "" or value == "null" or value is None:
+            if field.name == "workflow_params":
                 raise ValueError("field required")
-            return '{}'
+            return "{}"
         try:
             decoded = loads(value)
         except JSONDecodeError:
@@ -188,15 +190,13 @@ class RunRequest(BaseModel):
             NoSuitableEngine: The service does not know of a suitable workflow
                 engine service to process this request.
         """
-        service_info = ServiceInfoController().get_service_info(
-            get_counts=False
-        )
-        type_versions = service_info['workflow_type_versions']
-        type = values.get('workflow_type')
-        version = values.get('workflow_type_version')
+        service_info = ServiceInfoController().get_service_info(get_counts=False)
+        type_versions = service_info["workflow_type_versions"]
+        type = values.get("workflow_type")
+        version = values.get("workflow_type_version")
         if (
-            type not in type_versions or
-            version not in type_versions[type]['workflow_type_version']
+            type not in type_versions
+            or version not in type_versions[type]["workflow_type_version"]
         ):
             raise NoSuitableEngine
         return values
@@ -218,6 +218,7 @@ class Log(BaseModel):
         stderr: A URL to retrieve standard error logs of the task.
         stdout: A URL to retrieve standard output logs of the task.
     """
+
     cmd: Optional[List[str]] = []
     end_time: Optional[str] = None
     exit_code: Optional[int] = None
@@ -247,16 +248,17 @@ class State(BaseEnum):
         CANCELING: The task was canceled by the user, and is in the process of
             stopping.
     """
-    UNKNOWN = 'UNKNOWN'
-    QUEUED = 'QUEUED'
-    INITIALIZING = 'INITIALIZING'
-    RUNNING = 'RUNNING'
-    PAUSED = 'PAUSED'
-    COMPLETE = 'COMPLETE'
-    EXECUTOR_ERROR = 'EXECUTOR_ERROR'
-    SYSTEM_ERROR = 'SYSTEM_ERROR'
-    CANCELED = 'CANCELED'
-    CANCELING = 'CANCELING'
+
+    UNKNOWN = "UNKNOWN"
+    QUEUED = "QUEUED"
+    INITIALIZING = "INITIALIZING"
+    RUNNING = "RUNNING"
+    PAUSED = "PAUSED"
+    COMPLETE = "COMPLETE"
+    EXECUTOR_ERROR = "EXECUTOR_ERROR"
+    SYSTEM_ERROR = "SYSTEM_ERROR"
+    CANCELED = "CANCELED"
+    CANCELING = "CANCELING"
 
     @property
     def is_finished(self):
@@ -298,6 +300,7 @@ class RunLog(BaseModel):
         state: State of workflow run.
         task_logs: List of workflow task/job logs.
     """
+
     outputs: Optional[Dict] = None
     request: Optional[RunRequest] = None
     run_id: Optional[str] = None
@@ -333,8 +336,9 @@ class WesEndpoint(BaseModel):
             specification, i.e., `/ga4gh/wes/v1`.
         run_id: Identifier for workflow run on external WES endpoint.
     """
+
     host: str
-    base_path: Optional[str] = '/ga4gh/wes/v1'
+    base_path: Optional[str] = "/ga4gh/wes/v1"
     run_id: Optional[str]
 
 
@@ -359,6 +363,7 @@ class DbDocument(BaseModel):
             was forwarded.
         work_dir: Working directory for workflow run.
     """
+
     attachments: List[Attachment] = []
     run_log: RunLog = RunLog()
     task_id: Optional[str] = None
@@ -376,6 +381,7 @@ class RunId(BaseModel):
     Attributes:
         run_id: Workflow run identifier.
     """
+
     run_id: str
 
 
@@ -390,6 +396,7 @@ class RunStatus(BaseModel):
         run_id: Workflow run identifier.
         state: Workflow run state.
     """
+
     run_id: str
     state: State
 
@@ -405,6 +412,7 @@ class ErrorResponse(BaseModel):
         msg: Detailed error message.
         status_code: HTTP status code.
     """
+
     msg: Optional[str]
     status_code: int
 
@@ -416,6 +424,7 @@ class RunListResponse(BaseModel):
         runs: List of runs, indicating the run identifier and status for each.
         next_page_token: Token to receive the next page of results.
     """
+
     runs: Optional[List[RunStatus]] = []
     next_page_token: Optional[str]
 
@@ -427,6 +436,7 @@ class WorkflowTypeVersion(BaseModel):
         workflow_type_version: List of one or more acceptable versions for the
             workflow type.
     """
+
     workflow_type_version: Optional[List[str]] = []
 
 
@@ -443,6 +453,7 @@ class DefaultWorkflowEngineParameter(BaseModel):
         type: Parameter type.
         default_value: Stringified version of default parameter.
     """
+
     name: Optional[str]
     type: Optional[str]
     default_value: Optional[str]
@@ -485,13 +496,12 @@ class ServiceInfo(BaseModel):
             on how to get an authorization token for use with this service.
         tags: Additional information about this service as key-value pairs.
     """
+
     workflow_type_versions: Dict[str, WorkflowTypeVersion]
     supported_wes_versions: List[str] = []
     supported_filesystem_protocols: List[str] = []
     workflow_engine_versions: Dict[str, str]
-    default_workflow_engine_parameters: List[
-        DefaultWorkflowEngineParameter
-    ] = []
+    default_workflow_engine_parameters: List[DefaultWorkflowEngineParameter] = []
     system_state_counts: Dict[str, int]
     auth_instructions_url: str
     tags: Dict[str, str]

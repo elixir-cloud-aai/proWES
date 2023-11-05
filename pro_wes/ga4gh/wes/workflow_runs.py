@@ -141,11 +141,9 @@ class WorkflowRuns:
                 raise Forbidden
             else:
                 raise InternalServerError
-        document_stored: DbDocument = (
-            db_connector.upsert_fields_in_root_object(
-                root="wes_endpoint",
-                run_id=response.run_id,
-            )
+        document_stored: DbDocument = db_connector.upsert_fields_in_root_object(
+            root="wes_endpoint",
+            run_id=response.run_id,
         )
 
         # track workflow progress in background
@@ -487,9 +485,7 @@ class WorkflowRuns:
         """
         dict_of_lists = form_data.to_dict(flat=False)
         # flatten single item lists
-        dict_atomic = {
-            k: v[0] if len(v) == 1 else v for k, v in dict_of_lists.items()
-        }
+        dict_atomic = {k: v[0] if len(v) == 1 else v for k, v in dict_of_lists.items()}
         # remove 'workflow_attachment' field
         dict_atomic.pop("workflow_attachment", None)
         model_instance = RunRequest(**dict_atomic)

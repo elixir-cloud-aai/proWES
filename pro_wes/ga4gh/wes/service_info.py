@@ -8,28 +8,26 @@ from foca.models.config import Config
 from flask import current_app
 from pymongo.collection import Collection
 
-from pro_wes.exceptions import (
-    NotFound,
-)
+from pro_wes.exceptions import NotFound
 from pro_wes.ga4gh.wes.states import States
 
 logger = logging.getLogger(__name__)
 
 
 class ServiceInfo:
+    """Class for WES API service info server-side controller methods.
+
+    Creates service info upon first request, if it does not exist.
+
+    Attributes:
+        config: App configuration.
+        foca_config: FOCA configuration.
+        db_client_service_info: Database collection storing service info objects.
+        db_client_runs: Database collection storing workflow run objects.
+        object_id: Database identifier for service info.
+    """
     def __init__(self) -> None:
-        """Class for WES API service info server-side controller methods.
-
-        Creates service info upon first request, if it does not exist.
-
-        Attributes:
-            config: App configuration.
-            foca_config: FOCA configuration.
-            db_client_service_info: Database collection storing service info
-                objects.
-            db_client_runs: Database collection storing workflow run objects.
-            object_id: Database identifier for service info.
-        """
+        """Class constructor."""
         self.config: Dict = current_app.config
         self.foca_config: Config = self.config.foca
         self.db_client_service_info: Collection = (

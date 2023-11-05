@@ -24,6 +24,8 @@ jobs:
           pip install .
       - name: Lint with Flake8
         run: flake8
+      - name: Lint with Pylint
+        run: pylint pro_wes/ setup.py
       - name: Check code format with Black
         run: black --check setup.py pro_wes/ tests/
   test:

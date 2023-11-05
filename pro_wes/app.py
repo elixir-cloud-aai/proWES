@@ -11,6 +11,11 @@ from pro_wes.exceptions import NotFound
 
 
 def init_app() -> App:
+    """Initialize FOCA application.
+
+    Returns:
+        FOCA application.
+    """
     foca = Foca(
         config_file=Path(__file__).resolve().parent / "config.yaml",
         custom_config_model="pro_wes.config_models.CustomConfig",
@@ -28,9 +33,10 @@ def init_app() -> App:
 
 
 def run_app(app: App) -> None:
+    """Run FOCA application."""
     app.run(port=app.port)
 
 
 if __name__ == "__main__":
-    app = init_app()
-    run_app(app)
+    foca_app = init_app()
+    run_app(app=foca_app)

@@ -1,3 +1,5 @@
+"""App exceptions."""
+
 from connexion.exceptions import (
     BadRequestProblem,
     ExtraParameterProblem,
@@ -16,13 +18,9 @@ from werkzeug.exceptions import (
 class EngineProblem(InternalServerError):
     """The external workflow engine appears to experience problems."""
 
-    pass
-
 
 class EngineUnavailable(EngineProblem):
     """The external workflow engine is not available."""
-
-    pass
 
 
 class NoSuitableEngine(BadRequest):
@@ -30,13 +28,9 @@ class NoSuitableEngine(BadRequest):
     the requested workflow run.
     """
 
-    pass
-
 
 class RunNotFound(NotFound):
     """Raised when workflow run with given run identifier was not found."""
-
-    pass
 
 
 class IdsUnavailableProblem(PyMongoError):
@@ -44,13 +38,9 @@ class IdsUnavailableProblem(PyMongoError):
     the database collection.
     """
 
-    pass
-
 
 class StorageUnavailableProblem(OSError):
     """Raised when storage is not available for OS operations."""
-
-    pass
 
 
 exceptions = {

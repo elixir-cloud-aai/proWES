@@ -1,10 +1,7 @@
 """Controller for GA4GH WES API endpoints."""
 
 import logging
-from typing import (
-    Dict,
-    Tuple,
-)
+from typing import Dict, Literal, Tuple
 
 from connexion import request
 from foca.utils.logging import log_traffic
@@ -14,11 +11,14 @@ from pro_wes.ga4gh.wes.service_info import ServiceInfo
 
 logger = logging.getLogger(__name__)
 
+# pragma pylint: disable=invalid-name,unused-argument
 
-# controller for `GET /service-info`
+
 @log_traffic
 def GetServiceInfo() -> Dict:
     """Get information about this service.
+
+    Controller for `GET /service-info`.
 
     Returns:
         Response object according to WES API schema `RunId`. Cf.
@@ -28,10 +28,12 @@ def GetServiceInfo() -> Dict:
     return service_info.get_service_info()
 
 
-# controller for `POST /service-info``
+
 @log_traffic
-def postServiceInfo(**kwargs) -> Tuple[None, str, Dict]:
+def PostServiceInfo(**kwargs) -> Tuple[None, Literal["201"]]:
     """Set information about this service.
+
+    Controller for `POST /service-info`.
 
     Args:
         **kwargs: Additional keyword arguments passed along with request.
@@ -40,14 +42,15 @@ def postServiceInfo(**kwargs) -> Tuple[None, str, Dict]:
         An empty `201` response with headers.
     """
     service_info = ServiceInfo()
-    headers = service_info.set_service_info(data=request.json)
-    return (None, "201", headers)
+    service_info.set_service_info(data=request.json)
+    return (None, "201")
 
 
-# controller for `POST /runs`
 @log_traffic
 def RunWorkflow(*args, **kwargs) -> Dict[str, str]:
     """Start workflow run.
+
+    Controller for `POST /runs`.
 
     Args:
         *args: Positional arguments passed along with request.
@@ -65,10 +68,11 @@ def RunWorkflow(*args, **kwargs) -> Dict[str, str]:
     return response
 
 
-# controller for `GET /runs`
 @log_traffic
 def ListRuns(*args, **kwargs) -> Dict:
     """Return list of workflow runs.
+
+    Controller for `GET /runs`.
 
     Args:
         *args: Positional arguments passed along with request.
@@ -83,10 +87,11 @@ def ListRuns(*args, **kwargs) -> Dict:
     return response
 
 
-# controller for `GET /runs/{run_id}`
 @log_traffic
 def GetRunLog(run_id, *args, **kwargs) -> Dict:
     """Return detailed information about a workflow run.
+
+    Controller for `GET /runs/{run_id}`.
 
     Args:
         run_id: Workflow run identifier.
@@ -108,10 +113,11 @@ def GetRunLog(run_id, *args, **kwargs) -> Dict:
     return response
 
 
-# controller for `GET /runs/{run_id}/status`
 @log_traffic
 def GetRunStatus(run_id, *args, **kwargs) -> Dict:
     """Return status information about a workflow run.
+
+    Controller for `GET /runs/{run_id}/status`.
 
     Args:
         run_id: Workflow run identifier.
@@ -133,10 +139,11 @@ def GetRunStatus(run_id, *args, **kwargs) -> Dict:
     return response
 
 
-# controller for `POST /runs/{run_id}/cancel`
 @log_traffic
 def CancelRun(run_id, *args, **kwargs) -> Dict[str, str]:
     """Cancel workflow run.
+
+    Controller for `POST /runs/{run_id}/cancel`.
 
     Args:
         run_id: Workflow run identifier.

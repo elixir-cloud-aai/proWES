@@ -1,11 +1,10 @@
 """Basic WES client."""
 
+from typing import Dict, Optional, Union
+
+from pydantic import ValidationError
 import requests
 from requests.exceptions import RequestException
-from typing import (
-    Dict,
-    Optional,
-)
 
 from pro_wes.exceptions import EngineUnavailable
 from pro_wes.ga4gh.wes.models import (
@@ -54,7 +53,7 @@ class WesClient:
     def get_service_info(
         self,
         **kwargs,
-    ) -> ServiceInfo:
+    ) -> Union[ErrorResponse, ServiceInfo]:
         """Retrieve information about the WES instance.
 
         Args:
@@ -66,16 +65,17 @@ class WesClient:
         """
         self.set_headers()
         url = f"{self.url}/service-info"
+        response: Union[ErrorResponse, ServiceInfo]
         try:
             response_unvalidated = self.session.get(url, **kwargs).json()
         except (RequestException, ValueError) as exc:
             raise EngineUnavailable("external workflow engine unavailable") from exc
         try:
             response = ServiceInfo(**response_unvalidated)
-        except Exception:
+        except ValidationError:
             try:
                 response = ErrorResponse(**response_unvalidated)
-            except Exception as exc:
+            except ValidationError as exc:
                 raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
@@ -84,7 +84,7 @@ class WesClient:
         form_data: Dict[str, str],
         files: Optional[Dict] = None,
         **kwargs,
-    ) -> RunId:
+    ) -> Union[ErrorResponse, RunId]:
         """Send workflow run request.
 
         Args:
@@ -115,6 +115,7 @@ class WesClient:
         """
         self.set_headers()
         url = f"{self.url}/runs"
+        response: Union[ErrorResponse, RunId]
         if files is None:
             files = {}
         try:
@@ -132,17 +133,17 @@ class WesClient:
             raise EngineUnavailable("external workflow engine unavailable") from exc
         try:
             response = RunId(**response_unvalidated)
-        except Exception:
+        except ValidationError:
             try:
                 response = ErrorResponse(**response_unvalidated)
-            except Exception as exc:
+            except ValidationError as exc:
                 raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
     def get_runs(
         self,
         **kwargs,
-    ) -> RunListResponse:
+    ) -> Union[ErrorResponse, RunListResponse]:
         """Retrieve list of workflow runs.
 
         Args:
@@ -160,16 +161,17 @@ class WesClient:
 
         self.set_headers()
         url = f"{self.url}/runs"
+        response: Union[ErrorResponse, RunListResponse]
         try:
             response_unvalidated = self.session.get(url, **kwargs).json()
         except (RequestException, ValueError) as exc:
             raise EngineUnavailable("external workflow engine unavailable") from exc
         try:
             response = RunListResponse(**response_unvalidated)
-        except Exception:
+        except ValidationError:
             try:
                 response = ErrorResponse(**response_unvalidated)
-            except Exception as exc:
+            except ValidationError as exc:
                 raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
@@ -202,12 +204,12 @@ class WesClient:
             raise EngineUnavailable("external workflow engine unavailable") from exc
         # skip validation; workaround for cwl-WES
         return response_unvalidated
-        try:
+        try:  # pylint: disable=unreachable
             response = RunLog(**response_unvalidated)
-        except Exception:
+        except ValidationError:
             try:
                 response = ErrorResponse(**response_unvalidated)
-            except Exception as exc:
+            except ValidationError as exc:
                 raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
@@ -215,7 +217,7 @@ class WesClient:
         self,
         run_id: str,
         **kwargs,
-    ) -> RunStatus:
+    ) -> Union[ErrorResponse, RunStatus]:
         """Retrieve status information about a workflow run.
 
         Args:
@@ -233,16 +235,17 @@ class WesClient:
         """
         self.set_headers()
         url = f"{self.url}/runs/{run_id}/status"
+        response: Union[ErrorResponse, RunStatus]
         try:
             response_unvalidated = self.session.get(url, **kwargs).json()
         except (RequestException, ValueError) as exc:
             raise EngineUnavailable("external workflow engine unavailable") from exc
         try:
             response = RunStatus(**response_unvalidated)
-        except Exception:
+        except ValidationError:
             try:
                 response = ErrorResponse(**response_unvalidated)
-            except Exception as exc:
+            except ValidationError as exc:
                 raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 
@@ -250,7 +253,7 @@ class WesClient:
         self,
         run_id: str,
         **kwargs,
-    ) -> RunId:
+    ) -> Union[ErrorResponse, RunId]:
         """Cancel workflow run.
 
         Args:
@@ -268,16 +271,17 @@ class WesClient:
         """
         self.set_headers()
         url = f"{self.url}/runs/{run_id}/cancel"
+        response: Union[ErrorResponse, RunId]
         try:
             response_unvalidated = self.session.post(url, **kwargs).json()
         except (RequestException, ValueError) as exc:
             raise EngineUnavailable("external workflow engine unavailable") from exc
         try:
             response = RunId(**response_unvalidated)
-        except Exception:
+        except ValidationError:
             try:
                 response = ErrorResponse(**response_unvalidated)
-            except Exception as exc:
+            except ValidationError as exc:
                 raise ValueError(f"invalid response: {response_unvalidated}") from exc
         return response
 

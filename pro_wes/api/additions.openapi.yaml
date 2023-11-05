@@ -1,17 +1,17 @@
 openapi: 3.0.2
 info:
-  title: 'proWES'
+  title: "proWES"
   description: |
     Gateway GA4GH Workflow Execution Service (WES) API implementation; forwards
     incoming run requests to known WES instances and harmonizes the experience
     More information on [GitHub](https://github.com/elixir-cloud-aai/proWES).
   version: 1.0.0
   license:
-    name: 'Apache 2.0'
-    url: 'http://www.apache.org/licenses/LICENSE-2.0'
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0"
   contact:
-    name: 'ELIXIR Cloud & AAI'
-    email: 'alexander.kanitz@alumni.ethz.ch'
+    name: "ELIXIR Cloud & AAI"
+    email: "alexander.kanitz@alumni.ethz.ch"
 servers:
   - url: /ga4gh/wes/v1
 paths:
@@ -19,7 +19,7 @@ paths:
     post:
       summary: Register service info.
       description: Create or update the service info.
-      operationId: postServiceInfo
+      operationId: PostServiceInfo
       tags:
         - pro-wes
       requestBody:
@@ -29,34 +29,34 @@ paths:
           application/json:
             schema:
               x-body-name: service_info
-              $ref: '#/components/schemas/ServiceInfoRegister'
+              $ref: "#/components/schemas/ServiceInfoRegister"
       responses:
-        '201':
+        "201":
           description: The service info was successfully created.
         400:
           description: The request is malformed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
         401:
           description: The request is unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
         403:
           description: The requester is not authorized to perform this action.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: An unexpected error occurred.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     ServiceInfoRegister:
@@ -67,7 +67,7 @@ components:
             workflow_type_versions:
               type: object
               additionalProperties:
-                $ref: '#/components/schemas/WorkflowTypeVersion'
+                $ref: "#/components/schemas/WorkflowTypeVersion"
             supported_wes_versions:
               type: array
               items:
@@ -85,7 +85,7 @@ components:
             default_workflow_engine_parameters:
               type: array
               items:
-                $ref: '#/components/schemas/DefaultWorkflowEngineParameter'
+                $ref: "#/components/schemas/DefaultWorkflowEngineParameter"
               description: Each workflow engine can present additional parameters that can be sent to the workflow engine. This message will list the default values, and their types for each workflow engine.
             auth_instructions_url:
               type: string

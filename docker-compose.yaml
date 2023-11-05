@@ -27,8 +27,7 @@ services:
       - "8090:8080"
 
   rabbitmq:
-    image: "rabbitmq:3-management"
-    hostname: "rabbitmq"
+    image: rabbitmq:3-management
     restart: unless-stopped
     links:
       - mongodb

@@ -32,11 +32,11 @@ def set_run_state(
     else:
         _task_id = task_id
     try:
-        db = DbDocumentConnector(
+        db_connector = DbDocumentConnector(
             collection=collection,
             task_id=_task_id,
         )
-        db.update_run_state(state=state)
+        db_connector.update_run_state(state=state)
     except PyMongoError as exc:
         logger.exception(
             f"Database error. Could not update state of run '{run_id}' "

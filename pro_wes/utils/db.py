@@ -18,6 +18,7 @@ class DbDocumentConnector:
         collection: Database collection.
         task_id: Celery task identifier.
     """
+
     def __init__(
         self,
         collection: Collection,

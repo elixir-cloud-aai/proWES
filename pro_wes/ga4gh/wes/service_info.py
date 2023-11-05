@@ -26,6 +26,7 @@ class ServiceInfo:
         db_client_runs: Database collection storing workflow run objects.
         object_id: Database identifier for service info.
     """
+
     def __init__(self) -> None:
         """Class constructor."""
         self.config: Dict = current_app.config

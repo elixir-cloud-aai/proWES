@@ -51,6 +51,7 @@ class WorkflowRuns:
         document: Document to be inserted into the collection. Note that this is
             iteratively built up.
     """
+
     def __init__(self) -> None:
         """Class constructor."""
         self.config: Dict = current_app.config
@@ -172,8 +173,7 @@ class WorkflowRuns:
         """
         # set query params
         page_size = kwargs.get(
-            "page_size",
-            self.foca_config.custom.list_runs.default_page_size
+            "page_size", self.foca_config.custom.list_runs.default_page_size
         )
         page_token = kwargs.get("page_token", "")
 
@@ -191,12 +191,9 @@ class WorkflowRuns:
                 projection={
                     "run_log.run_id": True,
                     "run_log.state": True,
-                }
+                },
             )
-            .sort(
-                "_id",
-                -1
-            )
+            .sort("_id", -1)
             .limit(page_size)
         )
 

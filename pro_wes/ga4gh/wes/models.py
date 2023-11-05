@@ -9,7 +9,7 @@ from pydantic import (  # pylint: disable=no-name-in-module
     BaseModel,
     root_validator,
     validator,
-  )
+)
 
 from pro_wes.exceptions import NoSuitableEngine
 from pro_wes.ga4gh.wes.service_info import ServiceInfo as ServiceInfoController
@@ -19,6 +19,7 @@ from pro_wes.ga4gh.wes.service_info import ServiceInfo as ServiceInfoController
 
 class MetaEnum(EnumMeta):
     """Metaclass for enumerators."""
+
     def __contains__(cls, item):
         try:
             cls(item)  # pylint: disable=no-value-for-parameter
@@ -303,6 +304,7 @@ class RunLog(BaseModel):
 
     class Config:
         """Pydantic model configuration."""
+
         use_enum_values = True
 
 

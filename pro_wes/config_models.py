@@ -1,16 +1,17 @@
 """Custom app config models."""
 
-from typing import (
-    Dict,
-    List,
-    Optional,
-)
+from typing import Dict, List, Optional
 from pathlib import Path
 
-from pydantic import (
-    AnyUrl,
-    BaseModel,
+from pydantic import AnyUrl, BaseModel  # pylint: disable=no-name-in-module
+
+from pro_wes.ga4gh.wes.models import (
+    DefaultWorkflowEngineParameter,
+    ServiceInfoBase,
+    WorkflowTypeVersion,
 )
+
+# pragma pylint: disable=too-few-public-methods
 
 
 class Defaults(BaseModel):
@@ -71,37 +72,7 @@ class ListRuns(BaseModel):
     default_page_size: int = 5
 
 
-class WorkflowTypeVersion(BaseModel):
-    """Workflow type versions supported by this service.
-
-    Args:
-        workflow_type_version: List of one or more acceptable versions for the
-            workflow type.
-    """
-
-    workflow_type_version: Optional[List[str]] = []
-
-
-class DefaultWorkflowEngineParameter(BaseModel):
-    """Model for default workflow engine parameters.
-
-    Args:
-        name: Parameter name.
-        type: Parameter type.
-        default_value: Stringified version of default parameter.
-
-    Attributes:
-        name: Parameter name.
-        type: Parameter type.
-        default_value: Stringified version of default parameter.
-    """
-
-    name: Optional[str]
-    type: Optional[str]
-    default_value: Optional[str]
-
-
-class ServiceInfo(BaseModel):
+class ServiceInfo(ServiceInfoBase):
     """Model for initial service info configuration.
 
     Args:

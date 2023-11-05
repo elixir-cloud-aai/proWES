@@ -1,41 +1,36 @@
 """Utility functions for MongoDB document insertion, updates and retrieval."""
 
 import logging
-from typing import (
-    Mapping,
-    Optional,
-)
+from typing import Mapping, Optional
 
 from pymongo.collection import ReturnDocument
 from pymongo import collection as Collection
 
-from pro_wes.ga4gh.wes.models import (
-    DbDocument,
-    State,
-)
+from pro_wes.ga4gh.wes.models import DbDocument, State
 
 logger = logging.getLogger(__name__)
 
 
 class DbDocumentConnector:
+    """MongoDB connector to a given `pro_wes.ga4gh.wes.models.DbDocument` document.
+
+    Args:
+        collection: Database collection.
+        task_id: Celery task identifier.
+    """
+
     def __init__(
         self,
         collection: Collection,
         task_id: str,
     ) -> None:
-        """MongoDB connector to a given `pro_wes.ga4gh.wes.models.DbDocument`
-            document.
-
-        Args:
-            collection: Database collection.
-            task_id: Celery task identifier.
-        """
+        """Class constructor."""
         self.collection: Collection = collection
         self.task_id: str = task_id
 
     def get_document(
         self,
-        projection: Mapping = {"_id": False},
+        projection: Optional[Mapping] = None,
     ) -> DbDocument:
         """Get document associated with task.
 
@@ -51,6 +46,9 @@ class DbDocumentConnector:
         Raise:
             ValueError: Returned document does not conform to schema.
         """
+        if projection is None:
+            projection = {"_id": False}
+
         document_unvalidated = self.collection.find_one(
             filter={"task_id": self.task_id},
             projection=projection,
@@ -64,14 +62,14 @@ class DbDocumentConnector:
             ) from exc
         return document
 
-    def update_task_state(
+    def update_run_state(
         self,
         state: str = "UNKNOWN",
     ) -> None:
-        """Update task status.
+        """Update run status.
 
         Args:
-            state: New task status; one of `pro_wes.ga4gh.wes.models.State`.
+            state: New run status; one of `pro_wes.ga4gh.wes.models.State`.
 
         Raises:
             Passed
@@ -85,7 +83,6 @@ class DbDocumentConnector:
             {"$set": {"run_log.state": state}},
         )
         logger.info(f"[{self.task_id}] {state}")
-        return None
 
     def upsert_fields_in_root_object(
         self,

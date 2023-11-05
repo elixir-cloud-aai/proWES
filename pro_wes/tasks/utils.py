@@ -4,8 +4,9 @@ import logging
 from typing import Optional
 
 from pymongo import collection as Collection
+from pymongo.errors import PyMongoError
 
-import pro_wes.utils.db as db
+from pro_wes.utils.db import DbDocumentConnector
 
 
 # Get logger instance
@@ -31,34 +32,20 @@ def set_run_state(
     else:
         _task_id = task_id
     try:
-        document = db.update_run_state(
+        db_connector = DbDocumentConnector(
             collection=collection,
             task_id=_task_id,
-            state=state,
         )
-    except Exception as e:
+        db_connector.update_run_state(state=state)
+    except PyMongoError as exc:
         logger.exception(
-            (
-                "Database error. Could not update state of run '{run_id}' "
-                "(task id: '{task_id}') to state '{state}'. Original error "
-                "message: {type}: {msg}"
-            ).format(
-                run_id=run_id,
-                task_id=_task_id,
-                state=state,
-                type=type(e).__name__,
-                msg=e,
-            )
+            f"Database error. Could not update state of run '{run_id}' "
+            f"(task id: '{task_id}') to state '{state}'. Original error "
+            f"message: {type(exc).__name__}: {exc}"
         )
     finally:
         if document:
             logger.info(
-                (
-                    "State of run '{run_id}' (task id: '{task_id}') "
-                    "changed to '{state}'."
-                ).format(
-                    run_id=run_id,
-                    task_id=_task_id,
-                    state=state,
-                )
+                f"State of run '{run_id}' (task id: '{task_id}') "
+                f"changed to '{state}'."
             )

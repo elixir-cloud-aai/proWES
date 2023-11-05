@@ -2,27 +2,21 @@
 
 import logging
 from time import sleep
-from typing import (
-    Dict,
-    Optional,
-)
+from typing import Dict, Optional
 
 from foca.database.register_mongodb import _create_mongo_client
 from foca.models.config import Config
 from flask import Flask, current_app
 
-from pro_wes.exceptions import (
-    EngineProblem,
-    EngineUnavailable,
-)
-from pro_wes.ga4gh.wes.models import (  # noqa: F401
+from pro_wes.exceptions import EngineProblem, EngineUnavailable
+from pro_wes.ga4gh.wes.models import (  # noqa: F401 pylint: disable=unused-import
     DbDocument,
     RunLog,
     RunStatus,
     State,
 )
 from pro_wes.utils.db import DbDocumentConnector
-from pro_wes.client_wes import WesClient
+from pro_wes.ga4gh.wes.client_wes import WesClient
 from pro_wes.celery_worker import celery
 
 logger = logging.getLogger(__name__)
@@ -80,7 +74,7 @@ def task__track_run_progress(
     )
 
     # update state: INITIALIZING
-    db_client.update_task_state(state=State.INITIALIZING.value)
+    db_client.update_run_state(state=State.INITIALIZING.value)
 
     # instantiate WES client
     wes_client: WesClient = WesClient(
@@ -95,10 +89,10 @@ def task__track_run_progress(
         # to model
         response = wes_client.get_run(run_id=remote_run_id)
     except EngineUnavailable:
-        db_client.update_task_state(state=State.SYSTEM_ERROR.value)
+        db_client.update_run_state(state=State.SYSTEM_ERROR.value)
         raise
     #    if not isinstance(response, RunLog):
-    #        db_client.update_task_state(state=State.SYSTEM_ERROR.value)
+    #        db_client.update_run_state(state=State.SYSTEM_ERROR.value)
     #        raise EngineProblem("Did not receive expected response.")
     response.pop("request", None)
     document: DbDocument = db_client.upsert_fields_in_root_object(
@@ -121,21 +115,19 @@ def task__track_run_progress(
                 attempt += 1
                 logger.warning(exc, exc_info=True)
                 continue
-            else:
-                db_client.update_task_state(state=State.SYSTEM_ERROR.value)
-                raise
+            db_client.update_run_state(state=State.SYSTEM_ERROR.value)
+            raise
         if not isinstance(response, RunStatus):
             if attempt <= controller_config.polling_attempts:
                 attempt += 1
                 logger.warning(f"Received error response: {response}")
                 continue
-            else:
-                db_client.update_task_state(state=State.SYSTEM_ERROR.value)
-                raise EngineProblem("Received too many error responses.")
+            db_client.update_run_state(state=State.SYSTEM_ERROR.value)
+            raise EngineProblem("Received too many error responses.")
         attempt = 1
         if response.state != run_state:
             run_state = response.state
-            db_client.update_task_state(state=run_state.value)
+            db_client.update_run_state(state=run_state.value)
 
     # fetch run log and upsert database document
     try:
@@ -143,10 +135,10 @@ def task__track_run_progress(
         # to model
         response = wes_client.get_run(run_id=response.run_id)
     except EngineUnavailable:
-        db_client.update_task_state(state=State.SYSTEM_ERROR.value)
+        db_client.update_run_state(state=State.SYSTEM_ERROR.value)
         raise
     #    if not isinstance(response, RunLog):
-    #        db_client.update_task_state(state=State.SYSTEM_ERROR.value)
+    #        db_client.update_run_state(state=State.SYSTEM_ERROR.value)
     #        raise EngineProblem("Did not receive expected response.")
     response.pop("request", None)
     document = db_client.upsert_fields_in_root_object(

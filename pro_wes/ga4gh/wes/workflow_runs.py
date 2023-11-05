@@ -1,29 +1,22 @@
 """Controllers for the `/runs` and children routes."""
 
 import logging
-import string  # noqa: F401
+from pathlib import Path
+import string  # noqa: F401 pylint: disable=unused-import
 from shutil import copyfileobj
-from typing import (
-    Dict,
-    List,
-    Optional,
-)
+from typing import Dict, List, Optional
 
 from bson.objectid import ObjectId
 from celery import uuid
 from foca.models.config import Config
 from foca.utils.misc import generate_id
-from flask import (
-    current_app,
-    request,
-)
-from pathlib import Path
+from flask import current_app, request
 from pymongo.collection import Collection
 from pymongo.errors import DuplicateKeyError
 from werkzeug.datastructures import ImmutableMultiDict
 from werkzeug.utils import secure_filename
 
-from pro_wes.client_wes import WesClient
+from pro_wes.ga4gh.wes.client_wes import WesClient
 from pro_wes.exceptions import (
     BadRequest,
     EngineUnavailable,
@@ -49,28 +42,31 @@ logger = logging.getLogger(__name__)
 
 
 class WorkflowRuns:
-    def __init__(self) -> None:
-        """Class for WES API server-side controller methods.
+    """Class for WES API server-side controller methods.
 
-        Attributes:
-            config: App configuration.
-            foca_config: FOCA configuration.
-            db_client: Database collection storing workflow run objects.
-            document: Document to be inserted into the collection. Note that
-                this is iteratively built up.
-        """
+    Attributes:
+        config: App configuration.
+        foca_config: FOCA configuration.
+        db_client: Database collection storing workflow run objects.
+        document: Document to be inserted into the collection. Note that this is
+            iteratively built up.
+    """
+
+    def __init__(self) -> None:
+        """Class constructor."""
         self.config: Dict = current_app.config
         self.foca_config: Config = current_app.config.foca
         self.db_client: Collection = (
             self.foca_config.db.dbs["runStore"].collections["runs"].client
         )
 
-    # controller method for `POST /runs`
     def run_workflow(
         self,
         **kwargs,
     ) -> Dict[str, str]:
         """Start workflow run.
+
+        Controller for `POST /runs`.
 
         Args:
             **kwargs: Additional keyword arguments passed along with request.
@@ -129,18 +125,17 @@ class WorkflowRuns:
                 timeout=controller_config.timeout_post,
             )
         except EngineUnavailable:
-            db_connector.update_task_state(state=State.SYSTEM_ERROR.value)
+            db_connector.update_run_state(state=State.SYSTEM_ERROR.value)
             raise
         if isinstance(response, ErrorResponse):
-            db_connector.update_task_state(state=State.SYSTEM_ERROR.value)
+            db_connector.update_run_state(state=State.SYSTEM_ERROR.value)
             if response.status_code == 400:
                 raise BadRequest
-            elif response.status_code == 401:
+            if response.status_code == 401:
                 raise Unauthorized
-            elif response.status_code == 403:
+            if response.status_code == 403:
                 raise Forbidden
-            else:
-                raise InternalServerError
+            raise InternalServerError
         document_stored: DbDocument = db_connector.upsert_fields_in_root_object(
             root="wes_endpoint",
             run_id=response.run_id,
@@ -161,12 +156,13 @@ class WorkflowRuns:
 
         return {"run_id": document_stored.run_log.run_id}
 
-    # controller method for `GET /runs`
     def list_runs(
         self,
         **kwargs,
     ) -> Dict:
         """Return list of workflow runs.
+
+        Controller for `GET /runs`.
 
         Args:
             **kwargs: Keyword arguments passed along with request.
@@ -175,73 +171,55 @@ class WorkflowRuns:
             Response object according to WES API schema `RunListResponse`. Cf.
                 https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L495-L510
         """
-        # fall back to default page size if not provided by user
-        if "page_size" in kwargs:
-            page_size = kwargs["page_size"]
-        else:
-            page_size = self.foca_config.custom.list_runs.default_page_size
+        # set query params
+        page_size = kwargs.get(
+            "page_size", self.foca_config.custom.list_runs.default_page_size
+        )
+        page_token = kwargs.get("page_token", "")
 
-        # extract/set page token
-        if "page_token" in kwargs:
-            page_token = kwargs["page_token"]
-        else:
-            page_token = ""
-
-        # initialize filter dictionary
+        # set filters
         filter_dict = {}
-
-        # add filter for user-owned runs if user ID is available
         if "user_id" in kwargs:
             filter_dict["user_id"] = kwargs["user_id"]
-
-        # add pagination filter based on last object ID
         if page_token != "":
             filter_dict["_id"] = {"$lt": ObjectId(page_token)}
 
-        # query database for workflow runs
-        cursor = (
+        # get resources
+        resources = list(
             self.db_client.find(
                 filter=filter_dict,
                 projection={
                     "run_log.run_id": True,
                     "run_log.state": True,
-                }
-                # sort results by descending object ID (+/- newest to oldest)
+                },
             )
-            .sort(
-                "_id",
-                -1
-                # implement page size limit
-            )
+            .sort("_id", -1)
             .limit(page_size)
         )
 
-        # convert cursor to list
-        runs_list = list(cursor)
-
-        # get next page token from ID of last run in cursor
-        if runs_list:
-            next_page_token = str(runs_list[-1]["_id"])
+        # set next page token
+        if resources:
+            next_page_token = str(resources[-1]["_id"])
         else:
             next_page_token = ""
 
-        # reshape list of runs
-        for run in runs_list:
+        # format response
+        for run in resources:
             run["run_id"] = run["run_log"]["run_id"]
             run["state"] = run["run_log"]["state"]
             del run["run_log"]
             del run["_id"]
 
-        # build and return response
-        return {"next_page_token": next_page_token, "runs": runs_list}
+        return {"next_page_token": next_page_token, "runs": resources}
 
-    # controller method for `GET /runs/{run_id}`
     def get_run_log(
         self,
         run_id: str,
         **kwargs,
     ) -> Dict:
         """Return detailed information about a workflow run.
+
+        Controller for `GET /runs/{run_id}`.
 
         Args:
             run_id: Workflow run identifier.
@@ -252,10 +230,9 @@ class WorkflowRuns:
                 https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L511-L533
 
         Raises:
-            pro_wes.exceptions.Forbidden: The requester is not allowed to
-                access the resource.
-            pro_wes.exceptions.RunNotFound: The requested workflow run is not
-                available.
+            pro_wes.exceptions.Forbidden: The requester is not allowed to access the
+                resource.
+            pro_wes.exceptions.RunNotFound: The requested workflow run is not available.
         """
         # retrieve workflow run
         document = self.db_client.find_one(
@@ -269,7 +246,7 @@ class WorkflowRuns:
 
         # raise error if workflow run was not found
         if document is None:
-            logger.error("Run '{run_id}' not found.".format(run_id=run_id))
+            logger.error(f"Run '{run_id}' not found.")
             raise RunNotFound
 
         # raise error trying to access workflow run that is not owned by user
@@ -282,13 +259,14 @@ class WorkflowRuns:
 
         return document["run_log"]
 
-    # controller method for `GET /runs/{run_id}/status`
     def get_run_status(
         self,
         run_id: str,
         **kwargs,
     ) -> Dict:
         """Return status information about a workflow run.
+
+        Controller for `GET /runs/{run_id}/status`.
 
         Args:
             run_id: Workflow run identifier.
@@ -299,10 +277,9 @@ class WorkflowRuns:
                 https://github.com/ga4gh/workflow-execution-service-schemas/blob/c5406f1d3740e21b93d3ac71a4c8d7b874011519/openapi/workflow_execution_service.swagger.yaml#L585-L594
 
         Raises:
-            pro_wes.exceptions.Forbidden: The requester is not allowed to
-                access the resource.
-            pro_wes.exceptions.RunNotFound: The requested workflow run is not
-                available.
+            pro_wes.exceptions.Forbidden: The requester is not allowed to access the
+                resource.
+            pro_wes.exceptions.RunNotFound: The requested workflow run is not available.
         """
         # retrieve workflow run
         document = self.db_client.find_one(
@@ -316,7 +293,7 @@ class WorkflowRuns:
 
         # ensure resource is available
         if document is None:
-            logger.error("Run '{run_id}' not found.".format(run_id=run_id))
+            logger.error(f"Run '{run_id}' not found.")
             raise RunNotFound
 
         # ensure requester has access
@@ -331,13 +308,14 @@ class WorkflowRuns:
             "state": document["run_log"]["state"],
         }
 
-    # controller method for `POST /runs/{run_id}/cancel`
     def cancel_run(
         self,
         run_id: str,
         **kwargs,
     ) -> Dict[str, str]:
         """Cancel workflow run.
+
+        Controller for `GET /runs/{run_id}/cancel`.
 
         Args:
             run_id: Workflow run identifier.
@@ -347,10 +325,9 @@ class WorkflowRuns:
             Workflow run identifier.
 
         Raises:
-            pro_wes.exceptions.Forbidden: The requester is not allowed to
-                access the resource.
-            pro_wes.exceptions.RunNotFound: The requested workflow run is not
-                available.
+            pro_wes.exceptions.Forbidden: The requester is not allowed to access the
+                resource.
+            pro_wes.exceptions.RunNotFound: The requested workflow run is not available.
         """
         # retrieve workflow run
         document = self.db_client.find_one(
@@ -366,7 +343,7 @@ class WorkflowRuns:
 
         # ensure resource is available
         if document is None:
-            logger.error("Run '{run_id}' not found.".format(run_id=run_id))
+            logger.error(f"Run '{run_id}' not found.")
             raise RunNotFound
 
         # ensure requester has access
@@ -390,8 +367,10 @@ class WorkflowRuns:
         self,
         document: DbDocument,
     ) -> DbDocument:
-        """Creates unique run identifier and permanent and temporary storage
-        directories for current run.
+        """Set up run environment.
+
+        Create unique run identifier and permanent and temporary storage directories for
+        current run.
 
         Args:
             document: Document to be inserted into the run collection.
@@ -400,10 +379,10 @@ class WorkflowRuns:
             document: Updated documented as was inserted into the database.
 
         Raises:
-            pro_wes.exceptions.StorageUnavailableProblem: Raised if configured
-                storage location is unavailable for writing.
-            pro_wes.exceptions.IdsUnavailableProblem: Raised if no unique run
-                identifier could be found.
+            pro_wes.exceptions.StorageUnavailableProblem: Raised if configured storage
+                location is unavailable for writing.
+            pro_wes.exceptions.IdsUnavailableProblem: Raised if no unique run identifier
+                could be found.
         """
         controller_config = self.foca_config.custom.post_runs
         # try until unused run id was found
@@ -421,8 +400,8 @@ class WorkflowRuns:
                 work_dir.mkdir(parents=False, exist_ok=False)
             except FileExistsError:
                 continue
-            except FileNotFoundError:
-                raise StorageUnavailableProblem
+            except FileNotFoundError as exc:
+                raise StorageUnavailableProblem from exc
 
             # populate document
             document.run_log.run_id = run_id
@@ -450,8 +429,7 @@ class WorkflowRuns:
         """Return list of file attachments from request.
 
         Args:
-            work_dir: Working directory for constructing filenames for later
-                storage.
+            work_dir: Working directory for constructing filenames for later storage.
 
         Returns:
             List of `Attachment` model instances.
@@ -480,8 +458,7 @@ class WorkflowRuns:
         """Convert run request form input to `RunRequest` model.
 
         Args:
-            form_data: `werkzeug`/Flask data structure for representing form
-                values.
+            form_data: Flask data structure for representing form values.
         """
         dict_of_lists = form_data.to_dict(flat=False)
         # flatten single item lists
@@ -519,7 +496,6 @@ class WorkflowRuns:
                 for file in files:
                     if file.filename == attachment.filename:
                         copyfileobj(file.stream, dest)
-        return None
 
     @staticmethod
     def _check_access_permission(
@@ -529,8 +505,8 @@ class WorkflowRuns:
     ) -> None:
         """Check whether requester has access to resource.
 
-        Raise `403/Forbidden` response if resource owner is known and requester
-        is not owner.
+        Raise `403/Forbidden` response if resource owner is known and requester is not
+        owner.
 
         Args:
             resource_id: Workflow run identifier.
@@ -538,17 +514,14 @@ class WorkflowRuns:
             requester: Unique, persistent identifier of resource requester.
 
         Raises:
-            pro_wes.exceptions.Forbidden: The requester is not allowed to
-                access the resource.
+            pro_wes.exceptions.Forbidden: The requester is not allowed to access the
+                resource.
         """
         if requester is not None and requester != owner:
             logger.error(
                 (
-                    "User '{user_id}' is not allowed to access workflow run "
-                    "'{resource_id}'."
-                ).format(
-                    user_id=requester,
-                    resource_id=resource_id,
+                    f"User '{requester}' is not allowed to access workflow run "
+                    f"'{resource_id}'."
                 )
             )
             raise Forbidden

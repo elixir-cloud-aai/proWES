@@ -1,21 +1,11 @@
 """proWES schema models."""
 
-from enum import (
-    Enum,
-    EnumMeta,
-)
-from json import (
-    loads,
-    JSONDecodeError,
-)
+from enum import Enum, EnumMeta
+from json import loads, JSONDecodeError
 from pathlib import Path
-from typing import (
-    Dict,
-    List,
-    Optional,
-)
+from typing import Dict, List, Optional
 
-from pydantic import (
+from pydantic import (  # pylint: disable=no-name-in-module
     BaseModel,
     root_validator,
     validator,
@@ -24,18 +14,22 @@ from pydantic import (
 from pro_wes.exceptions import NoSuitableEngine
 from pro_wes.ga4gh.wes.service_info import ServiceInfo as ServiceInfoController
 
+# pragma pylint: disable=too-few-public-methods
+
 
 class MetaEnum(EnumMeta):
+    """Metaclass for enumerators."""
+
     def __contains__(cls, item):
         try:
-            cls(item)
+            cls(item)  # pylint: disable=no-value-for-parameter
         except ValueError:
             return False
         return True
 
 
 class BaseEnum(Enum, metaclass=MetaEnum):
-    pass
+    """Base class for enumerators."""
 
 
 class Attachment(BaseModel):
@@ -99,7 +93,7 @@ class RunRequest(BaseModel):
         "workflow_url",
         always=True,
     )
-    def required_str_field_not_empty(
+    def required_str_field_not_empty(  # pylint: disable=no-self-argument
         cls,
         value: str,
     ) -> str:
@@ -125,7 +119,7 @@ class RunRequest(BaseModel):
         "workflow_engine_parameters",
         always=True,
     )
-    def json_serialized_object_field_valid(
+    def json_serialized_object_field_valid(  # pylint: disable=no-self-argument
         cls,
         value: str,
         field: str,
@@ -166,14 +160,14 @@ class RunRequest(BaseModel):
             return "{}"
         try:
             decoded = loads(value)
-        except JSONDecodeError:
-            raise ValueError("could not be JSON deserialized")
+        except JSONDecodeError as exc:
+            raise ValueError("could not be JSON deserialized") from exc
         if not isinstance(decoded, dict):
             raise ValueError("could not be interpreted as object")
         return value
 
     @root_validator
-    def workflow_type_and_version_supported(
+    def workflow_type_and_version_supported(  # pylint: disable=no-self-argument
         cls,
         values: Dict,
     ) -> str:
@@ -192,11 +186,11 @@ class RunRequest(BaseModel):
         """
         service_info = ServiceInfoController().get_service_info(get_counts=False)
         type_versions = service_info["workflow_type_versions"]
-        type = values.get("workflow_type")
+        _type = values.get("workflow_type")
         version = values.get("workflow_type_version")
         if (
-            type not in type_versions
-            or version not in type_versions[type]["workflow_type_version"]
+            _type not in type_versions
+            or version not in type_versions[_type]["workflow_type_version"]
         ):
             raise NoSuitableEngine
         return values
@@ -309,6 +303,8 @@ class RunLog(BaseModel):
     task_logs: Optional[List[Log]] = []
 
     class Config:
+        """Pydantic model configuration."""
+
         use_enum_values = True
 
 
@@ -459,8 +455,8 @@ class DefaultWorkflowEngineParameter(BaseModel):
     default_value: Optional[str]
 
 
-class ServiceInfo(BaseModel):
-    """Model for service info.
+class ServiceInfoBase(BaseModel):
+    """Base model for service info.
 
     Args:
         workflow_type_versions: Workflow types and versions supported by this
@@ -473,8 +469,6 @@ class ServiceInfo(BaseModel):
             service.
         default_workflow_engine_parameters: Default workflow engine parameters
             set by this service.
-        system_state_counts: State counts for workflow runs available on this
-            service.
         auth_instructions_url: URL to web page with human-readable instructions
             on how to get an authorization token for use with this service.
         tags: Additional information about this service as key-value pairs.
@@ -490,8 +484,6 @@ class ServiceInfo(BaseModel):
             service.
         default_workflow_engine_parameters: Default workflow engine parameters
             set by this service.
-        system_state_counts: State counts for workflow runs available on this
-            service.
         auth_instructions_url: URL to web page with human-readable instructions
             on how to get an authorization token for use with this service.
         tags: Additional information about this service as key-value pairs.
@@ -502,6 +494,20 @@ class ServiceInfo(BaseModel):
     supported_filesystem_protocols: List[str] = []
     workflow_engine_versions: Dict[str, str]
     default_workflow_engine_parameters: List[DefaultWorkflowEngineParameter] = []
-    system_state_counts: Dict[str, int]
     auth_instructions_url: str
     tags: Dict[str, str]
+
+
+class ServiceInfo(ServiceInfoBase):
+    """Full model for service info.
+
+    Args:
+        system_state_counts: State counts for workflow runs available on this
+            service.
+
+    Attributes:
+        system_state_counts: State counts for workflow runs available on this
+            service.
+    """
+
+    system_state_counts: Dict[str, int]

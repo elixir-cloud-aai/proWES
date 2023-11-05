@@ -64,7 +64,7 @@ class WorkflowRuns:
         **kwargs,
     ) -> Dict[str, str]:
         """Start workflow run.
-    
+
         Controller for `POST /runs`.
 
         Args:
@@ -371,7 +371,7 @@ class WorkflowRuns:
         document: DbDocument,
     ) -> DbDocument:
         """Set up run environment.
-        
+
         Create unique run identifier and permanent and temporary storage directories for
         current run.
 

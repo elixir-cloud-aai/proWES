@@ -28,7 +28,6 @@ def GetServiceInfo() -> Dict:
     return service_info.get_service_info()
 
 
-
 @log_traffic
 def PostServiceInfo(**kwargs) -> Tuple[None, Literal["201"]]:
     """Set information about this service.

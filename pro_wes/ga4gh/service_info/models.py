@@ -8,6 +8,7 @@ from pydantic import AnyUrl, BaseModel, EmailStr  # pylint: disable=no-name-in-m
 
 # pragma pylint: disable=too-few-public-methods
 
+
 class Organization(BaseModel):
     """Model for organization implementing GA4GH services.
 

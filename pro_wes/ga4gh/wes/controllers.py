@@ -1,7 +1,7 @@
 """Controller for GA4GH WES API endpoints."""
 
 import logging
-from typing import Dict, Literal, Tuple
+from typing import Dict, Literal, Optional, Tuple
 
 from connexion import request
 from foca.utils.logging import log_traffic
@@ -29,7 +29,7 @@ def GetServiceInfo() -> Dict:
 
 
 @log_traffic
-def PostServiceInfo(**kwargs) -> Tuple[None, Literal["201"]]:
+def PostServiceInfo(**kwargs) -> Tuple[None, Literal["201"], Optional[dict[str, str]]]:
     """Set information about this service.
 
     Controller for `POST /service-info`.
@@ -42,8 +42,8 @@ def PostServiceInfo(**kwargs) -> Tuple[None, Literal["201"]]:
     """
     service_info = ServiceInfo()
     service_info.set_service_info(data=request.json)
-    logger.warning("BEFORE RETURNING")
-    return (None, "201")
+    headers = None
+    return (None, "201", headers)
 
 
 @log_traffic

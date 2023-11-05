@@ -41,7 +41,7 @@ def postServiceInfo(**kwargs) -> Tuple[None, str, Dict]:
     """
     service_info = ServiceInfo()
     headers = service_info.set_service_info(data=request.json)
-    return (None, '201', headers)
+    return (None, "201", headers)
 
 
 # controller for `POST /runs`

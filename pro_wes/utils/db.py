@@ -97,12 +97,7 @@ class DbDocumentConnector:
         """
         document_unvalidated = self.collection.find_one_and_update(
             {"task_id": self.task_id},
-            {
-                "$set": {
-                    ".".join([root, key]): value
-                    for (key, value) in kwargs.items()
-                }
-            },
+            {"$set": {".".join([root, key]): value for (key, value) in kwargs.items()}},
             return_document=ReturnDocument.AFTER,
         )
         try:

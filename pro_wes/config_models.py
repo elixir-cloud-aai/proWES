@@ -23,6 +23,7 @@ class Defaults(BaseModel):
         timeout: Timeout for outgoing requests. May be overridden by more
         specific parameters for each endpoint.
     """
+
     timeout: Optional[int] = 3
 
 
@@ -46,9 +47,10 @@ class PostRuns(BaseModel):
         raised and the job is set to state `SYSTEM_ERROR`. Once a valid
         response is obtained, the counter is reset to 1.
     """
-    storage_path: Path = Path('/data')
+
+    storage_path: Path = Path("/data")
     db_insert_attempts: int = 10
-    id_charset: str = 'string.ascii_uppercase + string.digits'
+    id_charset: str = "string.ascii_uppercase + string.digits"
     id_length: int = 6
     timeout_post: Optional[int] = None
     timeout_job: Optional[int] = None
@@ -65,6 +67,7 @@ class ListRuns(BaseModel):
     Attributes:
         default_page_size: Default page size for response pagination.
     """
+
     default_page_size: int = 5
 
 
@@ -75,6 +78,7 @@ class WorkflowTypeVersion(BaseModel):
         workflow_type_version: List of one or more acceptable versions for the
             workflow type.
     """
+
     workflow_type_version: Optional[List[str]] = []
 
 
@@ -91,6 +95,7 @@ class DefaultWorkflowEngineParameter(BaseModel):
         type: Parameter type.
         default_value: Stringified version of default parameter.
     """
+
     name: Optional[str]
     type: Optional[str]
     default_value: Optional[str]
@@ -129,25 +134,20 @@ class ServiceInfo(BaseModel):
             on how to get an authorization token for use with this service.
         tags: Additional information about this service as key-value pairs.
     """
+
     workflow_type_versions: Dict[str, WorkflowTypeVersion] = {
-        'CWL': WorkflowTypeVersion(workflow_type_version=['v1.0']),
+        "CWL": WorkflowTypeVersion(workflow_type_version=["v1.0"]),
     }
     supported_wes_versions: List[str] = [
-        '1.0.0',
+        "1.0.0",
     ]
     supported_filesystem_protocols: List[str] = [
-        'http',
+        "http",
     ]
     workflow_engine_versions: Dict[str, str] = {}
-    default_workflow_engine_parameters: List[
-        DefaultWorkflowEngineParameter
-    ] = []
-    auth_instructions_url: AnyUrl = (
-        'https://lifescience-ri.eu/ls-login/'
-    )
-    tags: Dict[str, str] = {
-        'service_repo': 'https://github.com/elixir-europe/proWES'
-    }
+    default_workflow_engine_parameters: List[DefaultWorkflowEngineParameter] = []
+    auth_instructions_url: AnyUrl = "https://lifescience-ri.eu/ls-login/"
+    tags: Dict[str, str] = {"service_repo": "https://github.com/elixir-europe/proWES"}
 
 
 class CustomConfig(BaseModel):
@@ -167,6 +167,7 @@ class CustomConfig(BaseModel):
         service_info: Configuration parameters for initiliazing the service
             info.
     """
+
     defaults: Defaults = Defaults()
     post_runs: PostRuns = PostRuns()
     list_runs: ListRuns = ListRuns()

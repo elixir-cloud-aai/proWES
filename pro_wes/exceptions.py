@@ -24,23 +24,19 @@ class EngineUnavailable(EngineProblem):
 
 
 class NoSuitableEngine(BadRequest):
-    """Raised when the service does not know of a suitable engine to process
-    the requested workflow run.
-    """
+    """No suitable workflow engine known."""
 
 
 class RunNotFound(NotFound):
-    """Raised when workflow run with given run identifier was not found."""
+    """Workflow run with given identifier not found."""
 
 
 class IdsUnavailableProblem(PyMongoError):
-    """Raised when no unique run identifier could be found for insertion into
-    the database collection.
-    """
+    """No unique run identifier available."""
 
 
 class StorageUnavailableProblem(OSError):
-    """Raised when storage is not available for OS operations."""
+    """Storage unavailable for OS operations."""
 
 
 exceptions = {

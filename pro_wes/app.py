@@ -21,7 +21,17 @@ def init_app() -> App:
         custom_config_model="pro_wes.config_models.CustomConfig",
     )
     app = foca.create_app()
+    _setup_first_start(app=app)
+    return app
+
+
+def _setup_first_start(app: App) -> None:
+    """Set up application for first start."""
     with app.app.app_context():
+        # create storage directory
+        work_dir = Path(current_app.config.foca.custom.post_runs.storage_path.resolve())
+        work_dir.mkdir(parents=True, exist_ok=True)
+        # set service info
         service_info = ServiceInfo()
         try:
             service_info = service_info.get_service_info()
@@ -29,7 +39,6 @@ def init_app() -> App:
             service_info.set_service_info(
                 data=current_app.config.foca.custom.service_info.dict()
             )
-    return app
 
 
 def run_app(app: App) -> None:

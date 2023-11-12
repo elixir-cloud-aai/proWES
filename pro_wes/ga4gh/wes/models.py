@@ -182,8 +182,7 @@ class RunRequest(BaseModel):
             The validated field values.
 
         Raises:
-            NoSuitableEngine: The service does not know of a suitable workflow
-                engine service to process this request.
+            NoSuitableEngine: No suitable workflow engine known to process request.
         """
         service_info = ServiceInfoController().get_service_info(get_counts=False)
         type_versions = service_info["workflow_type_versions"]
@@ -193,7 +192,10 @@ class RunRequest(BaseModel):
             _type not in type_versions
             or version not in type_versions[_type]["workflow_type_version"]
         ):
-            raise NoSuitableEngine
+            raise NoSuitableEngine(
+                f"No suitable workflow engine known for workflow type '{_type}' and"
+                f" version '{version}'; supported workflow engines: {type_versions}"
+            )
         return values
 
 

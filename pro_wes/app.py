@@ -43,7 +43,7 @@ def _setup_first_start(app: App) -> None:
             service_info = ServiceInfo().get_service_info()
         except NotFound:
             # Assuming set_service_info doesn't return anything
-            ServiceInfo().set_service_info(
+            service_info.set_service_info(
                 data=current_app.config["foca"].custom.service_info.dict()
             )
             # After setting the service info, you might want to get it again

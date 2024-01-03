@@ -29,7 +29,7 @@ jobs:
       - name: Check code format with Black
         run: black --check setup.py pro_wes/ tests/
       - name: Type check with mypy
-        run: mypy .
+        run: mypy setup.py pro_wes/ tests/
   test:
     name: Run tests
     runs-on: ubuntu-latest

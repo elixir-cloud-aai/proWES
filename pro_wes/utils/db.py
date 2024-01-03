@@ -1,7 +1,7 @@
 """Utility functions for MongoDB document insertion, updates and retrieval."""
 
 import logging
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Union
 
 from pymongo.collection import ReturnDocument
 from pymongo import collection as Collection
@@ -88,7 +88,7 @@ class DbDocumentConnector:
         self,
         root: str,
         **kwargs,
-    ) -> Optional[Mapping]:
+    ) -> Union[Optional[Mapping], DbDocument]:
         """Insert (or update) fields in(to) the same root object and return
         document.
         """

@@ -1,13 +1,13 @@
 """App exceptions."""
 
-from connexion.exceptions import (
+from connexion.exceptions import (  # type: ignore
     BadRequestProblem,
     ExtraParameterProblem,
     Forbidden,
     Unauthorized,
 )
 from pydantic import ValidationError
-from pymongo.errors import PyMongoError
+from pymongo.errors import PyMongoError  # type: ignore
 from werkzeug.exceptions import (
     BadRequest,
     InternalServerError,

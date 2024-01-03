@@ -1,3 +1,4 @@
+# mypy: disable-error-code="name-defined"
 """Package setup."""
 
 from pathlib import Path

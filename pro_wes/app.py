@@ -1,6 +1,7 @@
 """proWES application entry point."""
 
 from pathlib import Path
+from typing import Dict
 
 from connexion import App
 from flask import current_app
@@ -29,16 +30,24 @@ def _setup_first_start(app: App) -> None:
     """Set up application for first start."""
     with app.app.app_context():
         # create storage directory
-        work_dir = Path(current_app.config.foca.custom.post_runs.storage_path.resolve())
+        work_dir = Path(
+            current_app
+            .config["foca"]
+            .custom.post_runs
+            .storage_path.resolve()
+            )
         work_dir.mkdir(parents=True, exist_ok=True)
         # set service info
-        service_info = ServiceInfo()
+        service_info: Dict
         try:
-            service_info = service_info.get_service_info()
+            service_info = ServiceInfo().get_service_info()
         except NotFound:
-            service_info.set_service_info(
-                data=current_app.config.foca.custom.service_info.dict()
+            # Assuming set_service_info doesn't return anything
+            ServiceInfo().set_service_info(
+                data=current_app.config["foca"].custom.service_info.dict()
             )
+            # After setting the service info, you might want to get it again
+            service_info = ServiceInfo().get_service_info()
 
 
 def run_app(app: App) -> None:

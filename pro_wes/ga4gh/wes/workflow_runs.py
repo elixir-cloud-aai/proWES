@@ -462,7 +462,7 @@ class WorkflowRuns:
                 attachments.append(
                     Attachment(
                         filename=file.filename,
-                        object=file.stream,
+                        object=file.stream.read(),
                         path=work_dir
                         / self._secure_filename(
                             name=Path(file.filename),

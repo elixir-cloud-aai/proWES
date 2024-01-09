@@ -3,7 +3,7 @@
 from enum import Enum, EnumMeta
 from json import loads, JSONDecodeError
 from pathlib import Path
-from typing import Dict, List, Optional, IO
+from typing import Dict, List, Optional
 
 from pydantic import (  # pylint: disable=no-name-in-module
     BaseModel,
@@ -43,7 +43,7 @@ class Attachment(BaseModel):
     """
 
     filename: str
-    object: IO[bytes]
+    object: bytes
     path: Path
 
 

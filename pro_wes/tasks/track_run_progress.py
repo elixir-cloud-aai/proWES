@@ -56,7 +56,7 @@ def task__track_run_progress(
         pro_wes.exceptions.EngineUnavailable: The remote service is unavailable
             or is not a valid WES service.
     """
-    foca_config: Config = current_app.config["foca"]
+    foca_config: Config = current_app.config.foca
     controller_config: Dict = foca_config.custom.post_runs
 
     logger.info(f"[{self.request.id}] Start processing...")

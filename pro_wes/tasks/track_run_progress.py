@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
     ignore_result=True,
     track_started=True,
 )
-def task__track_run_progress(
+def task__track_run_progress(  # pylint: disable=too-many-statements
     self,
     remote_host: str,
     remote_base_path: str,

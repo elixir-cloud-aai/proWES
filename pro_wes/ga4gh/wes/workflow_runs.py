@@ -96,12 +96,21 @@ class WorkflowRuns:
         # write workflow attachments
         self._save_attachments(attachments=document_stored.attachments)
 
+        if document_stored.wes_endpoint is None:
+            raise ValueError("No WES endpoint available.")
+
+        if document_stored.wes_endpoint.base_path is None:
+            raise ValueError("No WES endpoint base path provided.")
+
         # instantiate WES client
         wes_client: WesClient = WesClient(
             host=document_stored.wes_endpoint.host,
             base_path=document_stored.wes_endpoint.base_path,
             token=kwargs.get("jwt", None),
         )
+
+        if document_stored.task_id is None:
+            raise ValueError("No task ID available")
 
         # instantiate database connector
         db_connector = DbDocumentConnector(
@@ -136,25 +145,34 @@ class WorkflowRuns:
             if response.status_code == 403:
                 raise Forbidden
             raise InternalServerError
-        document_stored: DbDocument = db_connector.upsert_fields_in_root_object(
+        updated_document_stored: DbDocument = db_connector.upsert_fields_in_root_object(
             root="wes_endpoint",
             run_id=response.run_id,
         )
+
+        if updated_document_stored.wes_endpoint is None:
+            raise ValueError("No WES endpoint available.")
 
         # track workflow progress in background
         task__track_run_progress.apply_async(
             None,
             {
                 "jwt": kwargs.get("jwt", None),
-                "remote_host": document_stored.wes_endpoint.host,
-                "remote_base_path": document_stored.wes_endpoint.base_path,
-                "remote_run_id": document_stored.wes_endpoint.run_id,
+                "remote_host": updated_document_stored.wes_endpoint.host,
+                "remote_base_path": updated_document_stored.wes_endpoint.base_path,
+                "remote_run_id": updated_document_stored.wes_endpoint.run_id,
             },
-            task_id=document_stored.task_id,
+            task_id=updated_document_stored.task_id,
             soft_time_limit=controller_config.timeout_job,
         )
 
-        return {"run_id": document_stored.run_log.run_id}
+        if updated_document_stored.wes_endpoint is None:
+            raise ValueError("No WES endpoint available.")
+
+        if updated_document_stored.wes_endpoint.run_id is None:
+            raise ValueError("WES endpoint does not have run_id.")
+
+        return {"run_id": updated_document_stored.wes_endpoint.run_id}
 
     def list_runs(
         self,
@@ -406,7 +424,7 @@ class WorkflowRuns:
             # populate document
             document.run_log.run_id = run_id
             document.task_id = uuid()
-            document.work_dir = str(work_dir)
+            document.work_dir = work_dir.as_posix()
             document.attachments = self._process_attachments(
                 work_dir=work_dir,
             )
@@ -437,18 +455,20 @@ class WorkflowRuns:
         attachments = []
         files = request.files.getlist("workflow_attachment")
         for file in files:
-            attachments.append(
-                Attachment(
-                    filename=file.filename,
-                    object=file.stream,
-                    path=str(
-                        work_dir
+            if file is not None:
+                if file.filename is None:
+                    raise ValueError("File does not have a filename.")
+
+                attachments.append(
+                    Attachment(
+                        filename=file.filename,
+                        object=file.stream.read(),
+                        path=work_dir
                         / self._secure_filename(
                             name=Path(file.filename),
-                        )
-                    ),
+                        ),
+                    )
                 )
-            )
         return attachments
 
     @staticmethod

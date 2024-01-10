@@ -88,7 +88,7 @@ class DbDocumentConnector:
         self,
         root: str,
         **kwargs,
-    ) -> Optional[Mapping]:
+    ) -> DbDocument:
         """Insert (or update) fields in(to) the same root object and return
         document.
         """

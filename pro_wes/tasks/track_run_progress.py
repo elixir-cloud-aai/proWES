@@ -97,7 +97,7 @@ def task__track_run_progress(
     response.pop("request", None)
     document: DbDocument = db_client.upsert_fields_in_root_object(
         root="run_log",
-        **response,
+        **dict(response),
     )
 
     # track workflow run progress
@@ -106,7 +106,13 @@ def task__track_run_progress(
     while not run_state.is_finished:
         sleep(controller_config.polling_wait)
         try:
-            response = wes_client.get_run_status(
+            if document.wes_endpoint is None:
+                raise ValueError("WES run ID not available.")
+
+            if document.wes_endpoint.run_id is None:
+                raise ValueError("WES run ID not available.")
+
+            wes_client.get_run_status(
                 run_id=document.wes_endpoint.run_id,
                 timeout=foca_config.custom.defaults.timeout,
             )
@@ -133,6 +139,9 @@ def task__track_run_progress(
     try:
         # workaround for cwl-WES; add .dict() when cwl-WES response conforms
         # to model
+        if response.run_id is None:
+            raise ValueError("WES run ID not available.")
+
         response = wes_client.get_run(run_id=response.run_id)
     except EngineUnavailable:
         db_client.update_run_state(state=State.SYSTEM_ERROR.value)
@@ -143,7 +152,8 @@ def task__track_run_progress(
     response.pop("request", None)
     document = db_client.upsert_fields_in_root_object(
         root="run_log",
-        **response,
+        **dict(response),
     )
 
     logger.info(f"[{self.request.id}] Processing completed.")
+    return self.request.id

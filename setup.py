@@ -16,7 +16,7 @@ with open(root_dir / "requirements.txt", encoding="utf-8") as _file:
 
 setup(
     name="pro-wes",
-    version=__version__,  # noqa: F821  # pylint: disable=undefined-variable
+    version=__version__,  # type: ignore # noqa: E501 F821 # pylint: disable=undefined-variable
     license="Apache License 2.0",
     description="Proxy/gateway GA4GH WES service",
     long_description=LONG_DESCRIPTION,

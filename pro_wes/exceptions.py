@@ -39,6 +39,10 @@ class StorageUnavailableProblem(OSError):
     """Storage unavailable for OS operations."""
 
 
+class WesEndpointProblem(NotFound):
+    """No/few reuirements provided for WES endpoint."""
+
+
 exceptions = {
     Exception: {
         "message": "An unexpected error occurred.",
@@ -94,6 +98,10 @@ exceptions = {
     },
     StorageUnavailableProblem: {
         "message": "Storage is not accessible.",
+        "code": "500",
+    },
+    WesEndpointProblem: {
+        "message": "No/few reuirements provided for WES endpoint.",
         "code": "500",
     },
 }

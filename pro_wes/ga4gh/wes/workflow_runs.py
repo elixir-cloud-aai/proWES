@@ -26,6 +26,7 @@ from pro_wes.exceptions import (
     RunNotFound,
     StorageUnavailableProblem,
     Unauthorized,
+    WesEndpointProblem,
 )
 from pro_wes.ga4gh.wes.models import (
     Attachment,
@@ -91,16 +92,19 @@ class WorkflowRuns:
         document.user_id = kwargs.get("user_id", None)
 
         # create run environment & insert run document into run collection
-        document_stored = self._create_run_environment(document=document)
+        document_stored: DbDocument = self._create_run_environment(document=document)
 
         # write workflow attachments
         self._save_attachments(attachments=document_stored.attachments)
 
-        if document_stored.wes_endpoint is None:
-            raise ValueError("No WES endpoint available.")
+        # ensure WES endpoint is available
+        assert document_stored.wes_endpoint is not None, "No WES endpoint available."
+        assert (
+            document_stored.wes_endpoint.base_path is not None
+        ), "WES endpoint does not have base_path."
 
-        if document_stored.wes_endpoint.base_path is None:
-            raise ValueError("No WES endpoint base path provided.")
+        if document_stored.task_id is None:
+            raise IdsUnavailableProblem
 
         # instantiate WES client
         wes_client: WesClient = WesClient(
@@ -108,9 +112,6 @@ class WorkflowRuns:
             base_path=document_stored.wes_endpoint.base_path,
             token=kwargs.get("jwt", None),
         )
-
-        if document_stored.task_id is None:
-            raise ValueError("No task ID available")
 
         # instantiate database connector
         db_connector = DbDocumentConnector(
@@ -150,8 +151,16 @@ class WorkflowRuns:
             run_id=response.run_id,
         )
 
-        if updated_document_stored.wes_endpoint is None:
-            raise ValueError("No WES endpoint available.")
+        # ensure WES endpoint is available
+        assert (
+            updated_document_stored.wes_endpoint is not None
+        ), "No WES endpoint available."
+        assert (
+            updated_document_stored.wes_endpoint.base_path is not None
+        ), "WES endpoint does not have base_path."
+
+        if updated_document_stored.wes_endpoint.run_id is None:
+            raise WesEndpointProblem
 
         # track workflow progress in background
         task__track_run_progress.apply_async(
@@ -165,12 +174,6 @@ class WorkflowRuns:
             task_id=updated_document_stored.task_id,
             soft_time_limit=controller_config.timeout_job,
         )
-
-        if updated_document_stored.wes_endpoint is None:
-            raise ValueError("No WES endpoint available.")
-
-        if updated_document_stored.wes_endpoint.run_id is None:
-            raise ValueError("WES endpoint does not have run_id.")
 
         return {"run_id": updated_document_stored.wes_endpoint.run_id}
 
@@ -424,7 +427,7 @@ class WorkflowRuns:
             # populate document
             document.run_log.run_id = run_id
             document.task_id = uuid()
-            document.work_dir = work_dir.as_posix()
+            document.work_dir = str(work_dir)  # type: ignore
             document.attachments = self._process_attachments(
                 work_dir=work_dir,
             )
@@ -455,20 +458,17 @@ class WorkflowRuns:
         attachments = []
         files = request.files.getlist("workflow_attachment")
         for file in files:
-            if file is not None:
-                if file.filename is None:
-                    raise ValueError("File does not have a filename.")
+            assert file is not None, "File object cannot be None."
+            assert file.filename is not None, "File does not have a filename."
 
-                attachments.append(
-                    Attachment(
-                        filename=file.filename,
-                        object=file.stream.read(),
-                        path=work_dir
-                        / self._secure_filename(
-                            name=Path(file.filename),
-                        ),
-                    )
+            attachments.append(
+                Attachment(
+                    filename=file.filename,
+                    object=file.stream.read(),
+                    path=work_dir / self._secure_filename(name=Path(file.filename)),
                 )
+            )
+
         return attachments
 
     @staticmethod

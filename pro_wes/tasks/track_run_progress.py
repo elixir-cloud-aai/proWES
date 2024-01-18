@@ -18,6 +18,7 @@ from pro_wes.ga4gh.wes.models import (  # noqa: F401 pylint: disable=unused-impo
 from pro_wes.utils.db import DbDocumentConnector
 from pro_wes.ga4gh.wes.client_wes import WesClient
 from pro_wes.celery_worker import celery
+from pro_wes.exceptions import WesEndpointProblem
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +88,7 @@ def task__track_run_progress(  # pylint: disable=too-many-statements
     try:
         # workaround for cwl-WES; add .dict() when cwl-WES response conforms
         # to model
-        response = wes_client.get_run(run_id=remote_run_id)
+        response: RunLog = wes_client.get_run(run_id=remote_run_id)
     except EngineUnavailable:
         db_client.update_run_state(state=State.SYSTEM_ERROR.value)
         raise
@@ -105,13 +106,12 @@ def task__track_run_progress(  # pylint: disable=too-many-statements
     attempt: int = 1
     while not run_state.is_finished:
         sleep(controller_config.polling_wait)
+
+        # ensure WES endpoint is available
+        assert document.wes_endpoint is not None, "No WES endpoint available."
+        if document.wes_endpoint.run_id is None:
+            raise WesEndpointProblem
         try:
-            if document.wes_endpoint is None:
-                raise ValueError("WES run ID not available.")
-
-            if document.wes_endpoint.run_id is None:
-                raise ValueError("WES run ID not available.")
-
             wes_client.get_run_status(
                 run_id=document.wes_endpoint.run_id,
                 timeout=foca_config.custom.defaults.timeout,
@@ -135,13 +135,12 @@ def task__track_run_progress(  # pylint: disable=too-many-statements
             run_state = response.state
             db_client.update_run_state(state=run_state.value)
 
+    assert response.run_id is not None, "WES run ID not available."
+
     # fetch run log and upsert database document
     try:
         # workaround for cwl-WES; add .dict() when cwl-WES response conforms
         # to model
-        if response.run_id is None:
-            raise ValueError("WES run ID not available.")
-
         response = wes_client.get_run(run_id=response.run_id)
     except EngineUnavailable:
         db_client.update_run_state(state=State.SYSTEM_ERROR.value)

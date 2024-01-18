@@ -28,7 +28,7 @@ jobs:
         run: pylint pro_wes/ setup.py
       - name: Check code format with Black
         run: black --check setup.py pro_wes/ tests/
-      - name: Type check with mypy
+      - name: Check types with mypy
         run: mypy setup.py pro_wes/
   test:
     name: Run tests

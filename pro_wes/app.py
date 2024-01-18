@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-from typing import Dict
 from connexion import App
 from flask import current_app
 from foca import Foca
@@ -33,14 +32,12 @@ def _setup_first_start(app: App) -> None:
         work_dir = Path(current_app.config.foca.custom.post_runs.storage_path.resolve())
         work_dir.mkdir(parents=True, exist_ok=True)
         # set service info
-        service_info: Dict  # pylint: disable=unused-variable
         try:
-            service_info = ServiceInfo().get_service_info()
+            ServiceInfo().get_service_info()
         except NotFound:
-            service_info_data: Dict = current_app.config.foca.custom.service_info.dict()
-            service_info_object = ServiceInfo()
-            service_info_object.set_service_info(data=service_info_data)
-            service_info = service_info_object.get_service_info()  # noqa: F841
+            ServiceInfo().set_service_info(
+                data=current_app.config.foca.custom.service_info.dict()
+            )
 
 
 def run_app(app: App) -> None:

@@ -2,7 +2,7 @@
 
 import logging
 from time import sleep
-from typing import Dict, Optional, Mapping
+from typing import Dict, Optional
 
 from foca.database.register_mongodb import _create_mongo_client
 from foca.models.config import Config

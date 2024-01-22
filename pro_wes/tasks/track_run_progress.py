@@ -57,7 +57,7 @@ def task__track_run_progress(  # pylint: disable=too-many-statements
         pro_wes.exceptions.EngineUnavailable: The remote service is unavailable
             or is not a valid WES service.
     """
-    foca_config: Config = current_app.config.foca
+    foca_config: Config = current_app.config.foca  # type: ignore
     controller_config: Dict = foca_config.custom.post_runs
 
     logger.info(f"[{self.request.id}] Start processing...")
@@ -95,7 +95,7 @@ def task__track_run_progress(  # pylint: disable=too-many-statements
     #    if not isinstance(response, RunLog):
     #        db_client.update_run_state(state=State.SYSTEM_ERROR.value)
     #        raise EngineProblem("Did not receive expected response.")
-    response.pop("request", None)
+    response.pop("request", None)  # type: ignore
     document: DbDocument = db_client.upsert_fields_in_root_object(
         root="run_log",
         **response.dict(),
@@ -105,7 +105,7 @@ def task__track_run_progress(  # pylint: disable=too-many-statements
     run_state: State = State.UNKNOWN
     attempt: int = 1
     while not run_state.is_finished:
-        sleep(controller_config.polling_wait)
+        sleep(controller_config.polling_wait)  # type: ignore
 
         # ensure WES endpoint is available
         assert document.wes_endpoint is not None, "No WES endpoint available."
@@ -117,14 +117,14 @@ def task__track_run_progress(  # pylint: disable=too-many-statements
                 timeout=foca_config.custom.defaults.timeout,
             )
         except EngineUnavailable as exc:
-            if attempt <= controller_config.polling_attempts:
+            if attempt <= controller_config.polling_attempts:  # type: ignore
                 attempt += 1
                 logger.warning(exc, exc_info=True)
                 continue
             db_client.update_run_state(state=State.SYSTEM_ERROR.value)
             raise
         if not isinstance(response, RunStatus):
-            if attempt <= controller_config.polling_attempts:
+            if attempt <= controller_config.polling_attempts:  # type: ignore
                 attempt += 1
                 logger.warning(f"Received error response: {response}")
                 continue
@@ -148,7 +148,7 @@ def task__track_run_progress(  # pylint: disable=too-many-statements
     #    if not isinstance(response, RunLog):
     #        db_client.update_run_state(state=State.SYSTEM_ERROR.value)
     #        raise EngineProblem("Did not receive expected response.")
-    response.pop("request", None)
+    response.pop("request", None)  # type: ignore
     document = db_client.upsert_fields_in_root_object(
         root="run_log",
         **dict(response),

@@ -56,7 +56,7 @@ class WorkflowRuns:
     def __init__(self) -> None:
         """Class constructor."""
         self.config: Dict = current_app.config
-        self.foca_config: Config = current_app.config.foca
+        self.foca_config: Config = current_app.config.foca  # type: ignore
         self.db_client: Collection = (
             self.foca_config.db.dbs["runStore"].collections["runs"].client
         )

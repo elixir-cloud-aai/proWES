@@ -158,7 +158,7 @@ class RunRequest(BaseModel):
                 value does not represent an object/dictionary.
         """
         if value == "" or value == "null" or value is None:
-            if field.name == "workflow_params":
+            if field == "workflow_params":
                 raise ValueError("field required")
             return "{}"
         try:

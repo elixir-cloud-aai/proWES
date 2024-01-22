@@ -30,7 +30,7 @@ class ServiceInfo:
     def __init__(self) -> None:
         """Class constructor."""
         self.config: Dict = current_app.config
-        self.foca_config: Config = self.config.foca
+        self.foca_config: Config = self.config.foca  # type: ignore
         self.db_client_service_info: Collection = (
             self.foca_config.db.dbs["runStore"].collections["service_info"].client
         )

@@ -2,7 +2,7 @@
 
 import logging
 from time import sleep
-from typing import Dict, Optional
+from typing import Dict, Optional, Mapping
 
 from foca.database.register_mongodb import _create_mongo_client
 from foca.models.config import Config
@@ -98,7 +98,7 @@ def task__track_run_progress(  # pylint: disable=too-many-statements
     response.pop("request", None)
     document: DbDocument = db_client.upsert_fields_in_root_object(
         root="run_log",
-        **dict(response),
+        **response.dict(),
     )
 
     # track workflow run progress

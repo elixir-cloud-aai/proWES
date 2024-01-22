@@ -414,7 +414,7 @@ class WorkflowRuns:
                 charset=controller_config.id_charset,
                 length=controller_config.id_length,
             )
-            work_dir = Path(controller_config.storage_path).resolve() / run_id
+            work_dir: Path = Path(controller_config.storage_path).resolve() / run_id
 
             # try to create working directory
             try:
@@ -427,7 +427,7 @@ class WorkflowRuns:
             # populate document
             document.run_log.run_id = run_id
             document.task_id = uuid()
-            document.work_dir = str(work_dir)  # type: ignore
+            document.work_dir = work_dir
             document.attachments = self._process_attachments(
                 work_dir=work_dir,
             )

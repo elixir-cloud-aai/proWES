@@ -29,15 +29,15 @@ def _setup_first_start(app: App) -> None:
     """Set up application for first start."""
     with app.app.app_context():
         # create storage directory
-        work_dir = Path(current_app.config.foca.custom.post_runs.storage_path.resolve())
+        _config_foca = current_app.config.foca  # type: ignore
+        work_dir = Path(_config_foca.custom.post_runs.storage_path.resolve())
         work_dir.mkdir(parents=True, exist_ok=True)
         # set service info
-        service_info = ServiceInfo()
         try:
-            service_info = service_info.get_service_info()
+            ServiceInfo().get_service_info()
         except NotFound:
-            service_info.set_service_info(
-                data=current_app.config.foca.custom.service_info.dict()
+            ServiceInfo().set_service_info(
+                data=current_app.config.foca.custom.service_info.dict()  # type: ignore
             )
 
 

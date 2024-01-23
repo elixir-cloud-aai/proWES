@@ -38,10 +38,12 @@ class Attachment(BaseModel):
 
     Args:
         filename: Name of the file as indicated in the run request.
+        object: File object.
         path: Path to the file on the app's storage system.
     """
 
     filename: str
+    object: bytes
     path: Path
 
 
@@ -156,7 +158,7 @@ class RunRequest(BaseModel):
                 value does not represent an object/dictionary.
         """
         if value == "" or value == "null" or value is None:
-            if field.name == "workflow_params":
+            if field == "workflow_params":
                 raise ValueError("field required")
             return "{}"
         try:
@@ -171,7 +173,7 @@ class RunRequest(BaseModel):
     def workflow_type_and_version_supported(  # pylint: disable=no-self-argument
         cls,
         values: Dict,
-    ) -> str:
+    ) -> Dict:
         """Ensure that workflow type and version are supported by this service
         instance.
 
@@ -338,7 +340,7 @@ class WesEndpoint(BaseModel):
 
     host: str
     base_path: Optional[str] = "/ga4gh/wes/v1"
-    run_id: Optional[str]
+    run_id: Optional[str] = None
 
 
 class DbDocument(BaseModel):

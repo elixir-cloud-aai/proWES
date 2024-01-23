@@ -18,6 +18,7 @@ from pro_wes.ga4gh.wes.models import (  # noqa: F401 pylint: disable=unused-impo
 from pro_wes.utils.db import DbDocumentConnector
 from pro_wes.ga4gh.wes.client_wes import WesClient
 from pro_wes.celery_worker import celery
+from pro_wes.exceptions import WesEndpointProblem
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
     ignore_result=True,
     track_started=True,
 )
-def task__track_run_progress(
+def task__track_run_progress(  # pylint: disable=too-many-statements
     self,
     remote_host: str,
     remote_base_path: str,
@@ -56,7 +57,7 @@ def task__track_run_progress(
         pro_wes.exceptions.EngineUnavailable: The remote service is unavailable
             or is not a valid WES service.
     """
-    foca_config: Config = current_app.config.foca
+    foca_config: Config = current_app.config.foca  # type: ignore
     controller_config: Dict = foca_config.custom.post_runs
 
     logger.info(f"[{self.request.id}] Start processing...")
@@ -87,38 +88,43 @@ def task__track_run_progress(
     try:
         # workaround for cwl-WES; add .dict() when cwl-WES response conforms
         # to model
-        response = wes_client.get_run(run_id=remote_run_id)
+        response: RunLog = wes_client.get_run(run_id=remote_run_id)
     except EngineUnavailable:
         db_client.update_run_state(state=State.SYSTEM_ERROR.value)
         raise
     #    if not isinstance(response, RunLog):
     #        db_client.update_run_state(state=State.SYSTEM_ERROR.value)
     #        raise EngineProblem("Did not receive expected response.")
-    response.pop("request", None)
+    response.pop("request", None)  # type: ignore
     document: DbDocument = db_client.upsert_fields_in_root_object(
         root="run_log",
-        **response,
+        **response.dict(),
     )
 
     # track workflow run progress
     run_state: State = State.UNKNOWN
     attempt: int = 1
     while not run_state.is_finished:
-        sleep(controller_config.polling_wait)
+        sleep(controller_config.polling_wait)  # type: ignore
+
+        # ensure WES endpoint is available
+        assert document.wes_endpoint is not None, "No WES endpoint available."
+        if document.wes_endpoint.run_id is None:
+            raise WesEndpointProblem
         try:
-            response = wes_client.get_run_status(
+            wes_client.get_run_status(
                 run_id=document.wes_endpoint.run_id,
                 timeout=foca_config.custom.defaults.timeout,
             )
         except EngineUnavailable as exc:
-            if attempt <= controller_config.polling_attempts:
+            if attempt <= controller_config.polling_attempts:  # type: ignore
                 attempt += 1
                 logger.warning(exc, exc_info=True)
                 continue
             db_client.update_run_state(state=State.SYSTEM_ERROR.value)
             raise
         if not isinstance(response, RunStatus):
-            if attempt <= controller_config.polling_attempts:
+            if attempt <= controller_config.polling_attempts:  # type: ignore
                 attempt += 1
                 logger.warning(f"Received error response: {response}")
                 continue
@@ -128,6 +134,8 @@ def task__track_run_progress(
         if response.state != run_state:
             run_state = response.state
             db_client.update_run_state(state=run_state.value)
+
+    assert response.run_id is not None, "WES run ID not available."
 
     # fetch run log and upsert database document
     try:
@@ -140,10 +148,11 @@ def task__track_run_progress(
     #    if not isinstance(response, RunLog):
     #        db_client.update_run_state(state=State.SYSTEM_ERROR.value)
     #        raise EngineProblem("Did not receive expected response.")
-    response.pop("request", None)
+    response.pop("request", None)  # type: ignore
     document = db_client.upsert_fields_in_root_object(
         root="run_log",
-        **response,
+        **dict(response),
     )
 
     logger.info(f"[{self.request.id}] Processing completed.")
+    return self.request.id

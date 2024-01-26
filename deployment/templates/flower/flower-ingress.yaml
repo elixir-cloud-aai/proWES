@@ -2,7 +2,7 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 {{- else }}
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 {{ end }}
 metadata:
@@ -31,8 +31,11 @@ status:
   - host: {{ .Values.flower.appName }}.{{ .Values.applicationDomain }}
     http:
       paths:
-      - path: "/"
+      - path: /
+        pathType: Exact
         backend:
-          serviceName: {{ .Values.flower.appName }}
-          servicePort: 5555
+          service:
+            name: {{ .Values.flower.appName }}
+            port:
+              number: 5555
 {{ end }}

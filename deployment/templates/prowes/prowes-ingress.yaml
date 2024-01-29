@@ -2,7 +2,7 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 {{- else }}
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 {{ end }}
 metadata:
@@ -33,7 +33,10 @@ status:
     http:
       paths:
       - path: "/ga4gh/wes/v1"
+        pathType: Exact
         backend:
-          serviceName: {{ .Values.prowes.appName }}
-          servicePort: 8080
+          service:
+            name: {{ .Values.prowes.appName }}
+            port:
+              number: 8080
 {{ end }}

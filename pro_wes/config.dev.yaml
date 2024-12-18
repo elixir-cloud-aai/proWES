@@ -30,7 +30,7 @@ security:
 # Database configuration
 # Cf. https://foca.readthedocs.io/en/latest/modules/foca.models.html#foca.models.config.DBConfig
 db:
-  host: mongodb
+  host: localhost
   port: 27017
   dbs:
     runStore:
@@ -116,7 +116,7 @@ custom:
     id_length: 6
     polling_attempts: 100
     polling_wait: 3
-    storage_path: "/data"
+    storage_path: "./data"
     timeout_job: null
     timeout_post: null
   list_runs:

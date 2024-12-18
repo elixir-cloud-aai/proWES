@@ -1,5 +1,6 @@
 """proWES application entry point."""
 
+import os
 from pathlib import Path
 
 from connexion import App
@@ -16,8 +17,13 @@ def init_app() -> App:
     Returns:
         FOCA application.
     """
+    _parent_dir = Path(__file__).resolve().parent
+    if os.environ.get("ENVIRONMENT") == "DEV":
+        config_file = _parent_dir / "config.dev.yaml"
+    else:
+        config_file = _parent_dir / "config.yaml"
     foca = Foca(
-        config_file=Path(__file__).resolve().parent / "config.yaml",
+        config_file=config_file,
         custom_config_model="pro_wes.config_models.CustomConfig",
     )
     app = foca.create_app()
@@ -47,5 +53,6 @@ def run_app(app: App) -> None:
 
 
 if __name__ == "__main__":
+    os.environ.setdefault("ENVIRONMENT", "DEV")
     foca_app = init_app()
     run_app(app=foca_app)

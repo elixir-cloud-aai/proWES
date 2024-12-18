@@ -221,3 +221,4 @@ tags
 !.gitkeep
 celeryd.pid
 *.modified.yaml
+data

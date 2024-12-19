@@ -11,7 +11,7 @@ services:
     image: mongo:3.2
     restart: unless-stopped
     volumes:
-      - ${PROWES_DATA_DIR:-../data/pro_wes}/db:${PWD}/data/db
+      - ${PROWES_DATA_DIR:-../data/pro_wes}/db:/data/db
     ports:
       - "27017:27017"
 

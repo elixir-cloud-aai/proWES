@@ -52,3 +52,18 @@ dev-app da:
 dev-celery dc:
 	@echo "Starting Celery worker..."
 	cd pro_wes && celery -A celery_worker worker -E --loglevel=info
+
+.PHONY: lint fl
+lint fl:
+
+	@echo "1.Formatting with black..."
+	black --exclude .venv pro_wes/ setup.py tests/
+	@echo "\n\n2.Checking style with flake8..."
+	black --exclude .venv pro_wes/ setup.py tests/
+	@echo "\n\n3.Running pylint..."
+	pylint pro_wes/ setup.py
+
+.PHONY: type-check tc
+type-check tc:
+	@echo "Running mypy..."
+	mypy pro_wes/ setup.py

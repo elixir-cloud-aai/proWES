@@ -17,11 +17,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
       - name: Install requirements
         run: |
+          pip install -e .
           pip install -r requirements_dev.txt
-          pip install .
       - name: Lint with Flake8
         run: flake8
       - name: Lint with Pylint

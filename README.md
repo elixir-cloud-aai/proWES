@@ -9,9 +9,8 @@
 proWES is a robust and scalable [Global Alliance for Genomics and Health
 (GA4GH)][res-ga4gh] [Workflow Execution Service (WES) API][res-ga4gh-wes] gateway
 that may play a pivotal role in augmenting the capabilities of your GA4GH Cloud
-ecosystem by offering flexible middleware injection for effectively federating
-atomic, containerized workloads across on premise, hybrid and multi-cloud
-environments composed of GA4GH WES nodes.
+ecosystem by offering flexible middleware injection or effective workflow
+deployment across a range of federated workflow management system deployments.
 
 ## Description
 
@@ -22,12 +21,12 @@ instances. As such, it can serve, for example, as a compatibility layer, a load
 balancer workload distribution layer, a public entry point to an enclave of
 independent compute nodes, or a means of collecting telemetry.
 
-When WES requests are received, proWES applies a configured middlewares before
-forwarding the requests to appropriate WES instances in the network. A plugin
-system makes it easy to write and inject middlewares tailored to specific
-requirements, such as for access control, request/response processing or
-validation, or the selection of suitable endpoints considering data use
-restrictions and client preferences.
+When WES requests are received, proWES applies applies one or more configurable
+middlewares  before forwarding the requests to appropriate WES instances in
+the network. A plugin system makes it easy to write and inject middlewares
+tailored to specific requirements, such as for access control, request/response
+processing or validation, or the selection of suitable endpoints considering
+data use restrictions and client preferences.
 
 ### Built-in middleware plugins
 

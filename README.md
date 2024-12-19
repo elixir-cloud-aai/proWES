@@ -21,8 +21,8 @@ instances. As such, it can serve, for example, as a compatibility layer, a load
 balancer workload distribution layer, a public entry point to an enclave of
 independent compute nodes, or a means of collecting telemetry.
 
-When WES requests are received, proWES applies applies one or more configurable
-middlewares  before forwarding the requests to appropriate WES instances in
+When WES requests are received, proWES applies one or more configurable
+middlewares before forwarding the requests to appropriate WES instances in
 the network. A plugin system makes it easy to write and inject middlewares
 tailored to specific requirements, such as for access control, request/response
 processing or validation, or the selection of suitable endpoints considering

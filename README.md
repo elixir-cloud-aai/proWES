@@ -9,7 +9,7 @@
 proWES is a robust and scalable [Global Alliance for Genomics and Health
 (GA4GH)][res-ga4gh] [Workflow Execution Service (WES) API][res-ga4gh-wes] gateway
 that may play a pivotal role in augmenting the capabilities of your GA4GH Cloud
-ecosystem by offering flexible middleware injection or effective workflow
+ecosystem by offering flexible middleware injection for effective workflow
 deployment across a range of federated workflow management system deployments.
 
 ## Description

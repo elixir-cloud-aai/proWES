@@ -369,7 +369,7 @@ class DbDocument(BaseModel):
     run_log: RunLog = RunLog()
     task_id: Optional[str] = None
     user_id: Optional[str] = None
-    work_dir: Optional[Path] = None
+    work_dir: Optional[str] = None
     wes_endpoint: Optional[WesEndpoint] = None
 
 

@@ -85,7 +85,7 @@ class WorkflowRuns:
 
         # get and attach suitable WES endpoint
         document.wes_endpoint = WesEndpoint(
-            host="https://wes-na.cloud.e-infra.cz",
+            host="https://csc-wes-noauth.rahtiapp.fi",
         )
 
         # get and attach workflow run owner

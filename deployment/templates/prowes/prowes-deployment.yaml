@@ -12,11 +12,24 @@ spec:
       labels:
         app: {{ .Values.prowes.appName }}
     spec:
+      {{- if eq .Values.storageAccessMode "ReadWriteOnce" }}
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ .Values.celeryWorker.appName }}
+            topologyKey: "kubernetes.io/hostname"
+      {{- end }}
       initContainers:
       - name: vol-init
         image: busybox
         command: [ 'mkdir' ]
         args: [ '-p', '/data/db', '/data/specs' ]
+        resources: {{- toYaml .Values.prowes.resources | nindent 10 }}
         volumeMounts:
         - mountPath: /data
           name: prowes-volume
@@ -51,6 +64,13 @@ spec:
           value: {{ .Values.rabbitmq.appName }}
         - name: RABBIT_PORT
           value: "5672"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
         livenessProbe:
           tcpSocket:
             port: prowes-port

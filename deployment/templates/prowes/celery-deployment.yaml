@@ -16,6 +16,13 @@ spec:
         image: busybox
         command: [ 'mkdir' ]
         args: [ '-p', '/data/db', '/data/output', '/data/tmp' ]
+        resources:
+          limits:
+            memory: 256Mi
+            cpu: 100m
+          requests:
+            memory: 256Mi
+            cpu: 100m
         volumeMounts:
         - mountPath: /data
           name: prowes-volume
@@ -50,13 +57,7 @@ spec:
           value: {{ .Values.rabbitmq.appName }}
         - name: RABBIT_PORT
           value: "5672"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "300m"
-          limits:
-            memory: "8Gi"
-            cpu: "1"
+        resources: {{- toYaml .Values.celeryWorker.resources | nindent 10 }}
         volumeMounts:
         - mountPath: /data
           name: prowes-volume

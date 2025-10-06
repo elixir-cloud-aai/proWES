@@ -25,6 +25,13 @@ flower:
 prowes:
   appName: prowes
   image: elixircloud/prowes:latest
+  initResources:
+    limits:
+      memory: 16Mi
+      cpu: 10m
+    requests:
+      memory: 16Mi
+      cpu: 10m
   resources:
     limits:
       memory: 256Mi
@@ -36,6 +43,13 @@ prowes:
 celeryWorker:
   appName: celery-worker
   image: elixircloud/prowes:latest
+  initResources:
+    limits:
+      memory: 16Mi
+      cpu: 10m
+    requests:
+      memory: 16Mi
+      cpu: 10m
   resources:
     limits:
       cpu: 500m

@@ -29,7 +29,7 @@ spec:
         image: busybox
         command: [ 'mkdir' ]
         args: [ '-p', '/data/db', '/data/specs' ]
-        resources: {{- toYaml .Values.prowes.resources | nindent 10 }}
+        resources: {{- toYaml .Values.prowes.initResources | nindent 10 }}
         volumeMounts:
         - mountPath: /data
           name: prowes-volume
@@ -64,13 +64,7 @@ spec:
           value: {{ .Values.rabbitmq.appName }}
         - name: RABBIT_PORT
           value: "5672"
-        resources:
-          limits:
-            cpu: 500m
-            memory: 256Mi
-          requests:
-            cpu: 100m
-            memory: 256Mi
+        resources: {{- toYaml .Values.prowes.resources | nindent 10 }}
         livenessProbe:
           tcpSocket:
             port: prowes-port

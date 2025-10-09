@@ -28,10 +28,10 @@ prowes:
   initResources:
     limits:
       memory: 16Mi
-      cpu: 10m
+      cpu: 50m
     requests:
       memory: 16Mi
-      cpu: 10m
+      cpu: 50m
   resources:
     limits:
       memory: 256Mi
@@ -46,10 +46,10 @@ celeryWorker:
   initResources:
     limits:
       memory: 16Mi
-      cpu: 10m
+      cpu: 50m
     requests:
       memory: 16Mi
-      cpu: 10m
+      cpu: 50m
   resources:
     limits:
       cpu: 500m

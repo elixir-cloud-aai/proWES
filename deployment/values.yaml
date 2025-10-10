@@ -2,11 +2,11 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-applicationDomain: ""
+applicationDomain: "rahtiapp.fi"
 
 # which cluster type proWES is going to be deployed on
 # it can be either 'kubernetes' or 'openshift'
-clusterType: kubernetes
+clusterType: openshift 
 
 # mongodb-pvc.yaml/rabbitmq-pvc.yaml, change to ReadWriteMany if storageClass can do RWX
 storageAccessMode: ReadWriteOnce
@@ -60,10 +60,12 @@ celeryWorker:
 
 mongodb:
   appName: mongodb
-  databaseAdminPassword: adminpasswd
-  databaseName: prowes-db
-  databasePassword: prowes-db-passwd
-  databaseUser: prowes-user
+  secret:
+    databaseRootUsername: prowes-adm
+    databaseRootPassword: adminpasswd
+    databaseUser: prowes-user
+    databasePassword: prowes-db-passwd
+    databaseName: prowes-db
   volumeSize: 1Gi
   image: docker.io/library/mongo:noble 
   resources:

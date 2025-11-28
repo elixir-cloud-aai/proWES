@@ -8,4 +8,4 @@ Once deployed:
 
        curl -X GET "https://{{ .Values.prowes.appName }}.{{ .Values.applicationDomain }}/ga4gh/wes/v1/service-info" -H "Accept: application/json"
 
-  2. Access the Swagger UI via https://{{ .Values.prowes.appName }}/ga4gh/wes/v1/ui
+  2. Access the Swagger UI via https://{{ .Values.prowes.appName }}.{{ .Values.applicationDomain }}/ga4gh/wes/v1/ui

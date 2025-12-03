@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-init-script 
+data:
+  init-script.js: |
+    db = db.getSiblingDB('runStore');
+    dbproWES = db.getSiblingDB('{{ tpl .Values.mongodb.secret.databaseName . }}')
+
+    dbproWES.createUser({
+      user: "{{ tpl .Values.mongodb.secret.databaseUser . }}",
+      pwd: "{{ tpl .Values.mongodb.secret.databasePassword . }}",
+      roles: [
+        {
+          role: "readWrite",
+          db: "{{ tpl .Values.mongodb.secret.databaseName . }}"
+        }
+      ]
+    });
+
+    // Create the 'runs' and 'service_info' collections
+    // Database configuration from https://github.com/elixir-cloud-aai/proWES/blob/59b53a4bdd06dd83ff41754b27d97309073ed237/pro_wes/config.yaml#L30
+    db.createCollection('runs');
+    db.runs.createIndex(
+      { run_id: 1, task_id: 1 },
+      { unique: true, sparse: true }
+    );
+    db.createCollection('service_info');
+    db.service_info.createIndex(
+      { id: 1 }
+    );
+
+    dbproWES.createCollection('runs');
+    dbproWES.runs.createIndex(
+      { run_id: 1, task_id: 1 },
+      { unique: true, sparse: true }
+    );
+    dbproWES.createCollection('service_info');
+    dbproWES.service_info.createIndex(
+      { id: 1}
+    );

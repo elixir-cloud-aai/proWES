@@ -85,7 +85,7 @@ class WorkflowRuns:
 
         # get and attach suitable WES endpoint
         document.wes_endpoint = WesEndpoint(
-            host="https://csc-wes-noauth.rahtiapp.fi",
+            host="https://wes-na.cloud.e-infra.cz",
         )
 
         # get and attach workflow run owner
@@ -427,7 +427,7 @@ class WorkflowRuns:
             # populate document
             document.run_log.run_id = run_id
             document.task_id = uuid()
-            document.work_dir = work_dir
+            document.work_dir = str(work_dir)
             document.attachments = self._process_attachments(
                 work_dir=work_dir,
             )
@@ -482,7 +482,9 @@ class WorkflowRuns:
         """
         dict_of_lists = form_data.to_dict(flat=False)
         # flatten single item lists
-        dict_atomic = {k: v[0] if len(v) == 1 else v for k, v in dict_of_lists.items()}
+        dict_atomic: dict = {
+            k: v[0] if len(v) == 1 else v for k, v in dict_of_lists.items()
+        }
         # remove 'workflow_attachment' field
         dict_atomic.pop("workflow_attachment", None)
         model_instance = RunRequest(**dict_atomic)
